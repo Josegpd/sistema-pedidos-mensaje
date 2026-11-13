@@ -27,7 +27,7 @@ class Pago:
             f"\nPago #{self.__id}\n"
             f"==================================================\n"
             f"\nFecha: {self.__date}\n"
-            f"Cliente: {self.__client.get_names} {self.__client.get_last_names}\n"
+            f"Cliente: {self.__client.get_names()} {self.__client.get_last_names()}\n"
             f"Método de pago: {self.__pay_method}\n"
             f"Monto: {self.__amount}"
         )

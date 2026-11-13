@@ -37,6 +37,7 @@ class Plato:
 
     def a_dict(self):
         return {
+            "id": self.__id,
             "nombre": self.__name,
             "precio": self.__price
         }

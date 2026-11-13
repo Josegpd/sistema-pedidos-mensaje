@@ -6,7 +6,7 @@ from random import randint
 class Pedido:
     
     # Constructor
-    def __init__(self, hora: str, fecha: str, total: float, cliente, mensaje, estado: str = "Pendiente"):
+    def __init__(self, hora: str, fecha: str, total: float, cliente, mensaje, estado: str = "Pendiente", registrar_en_cliente: bool = True):
         self.__id = randint(1, 1000000) # id unico para ese pedido
         self.__hour = hora
         self.__date = fecha
@@ -17,7 +17,8 @@ class Pedido:
         self.__pay_data = [] # Pedido sin pagos
         self.__status = estado
 
-        self.__client.push_new_order(self) # Agregar la orden al historial del cliente
+        if registrar_en_cliente and self.__client:
+            self.__client.push_new_order(self) # Agregar la orden al historial del cliente
 
     def get_id(self):
         return "#" + str(self.__id)
@@ -72,7 +73,7 @@ class Pedido:
 
     # Calcular el costo de cada comida del pedido
     def calcular_monto_total(self) -> float:
-        return sum(comida.get_price() for comida in self.__details)
+        return sum(detalle.calcular_subtotal() for detalle in self.__details)
 
     # Devoler el saldo restante a pagar
     def calcular_saldo_restante(self) -> float:
@@ -119,8 +120,10 @@ class Pedido:
             total = d.get("total"),
             cliente = cliente,
             mensaje = mensaje,
-            estado = d.get("estado", "Pendiente")
+            estado = d.get("estado", "Pendiente"),
+            registrar_en_cliente = False
         )
+
         # Asignar el ID exacto que tenia guardado
         pedido.__id = d.get("id")
         

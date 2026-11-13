@@ -35,5 +35,5 @@ class Menu:
         menu = cls()
         for p_dict in lista_platos_dict:
             plato = Plato.desde_dict(p_dict)
-            menu.agregar_plato_al_menu(plato.get_name(), plato)
+            menu.agregar_plato_al_menu(plato.get_id(), plato)
         return menu

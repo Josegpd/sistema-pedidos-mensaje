@@ -48,7 +48,7 @@ RUTAS = {
 def cargar_todo():
     # Cargar datos crudos manejando errores con valores por defecto
     datos_clientes = cargar_json(RUTAS["clientes"], [])
-    datos_menus = cargar_json(RUTAS["menus"], [])
+    datos_menu = cargar_json(RUTAS["menu"], [])
     datos_pedidos = cargar_json(RUTAS["pedidos"], [])
     datos_pagos = cargar_json(RUTAS["pagos"], [])
     datos_platos = cargar_json(RUTAS["platos"], [])
@@ -59,7 +59,7 @@ def cargar_todo():
         cliente = Cliente.desde_dict(c_dict)
         clientes[cliente.get_id()] = cliente
 
-    menu = Menu.desde_dict(datos_menus)
+    menu = Menu.desde_dict(datos_menu)
 
     pedidos = []
     for p_dict in datos_pedidos:
@@ -95,7 +95,7 @@ def guardar_todo(sistema_datos):
     guardar_json(RUTAS["clientes"], lista_clientes)
 
     # Convertir menu
-    menu = sistema_datos["menu"]
+    menu = sistema_datos["menu"].a_dict()
     guardar_json(RUTAS["menu"], menu)
 
     # Convertir pedidos
@@ -104,7 +104,7 @@ def guardar_todo(sistema_datos):
 
     # Convertir pagos
     lista_pagos = [pago.a_dict() for pago in sistema_datos["pagos"]]
-    guardar_json(RUTAS["pagos"], lista_pedidos)
+    guardar_json(RUTAS["pagos"], lista_pagos)
 
     # Convertir platos
     lista_platos = [plato.a_dict() for plato in sistema_datos["platos"]]
