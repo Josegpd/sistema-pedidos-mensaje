@@ -7,25 +7,57 @@ from .normalizar import capitalizar_nombre, limpiar, quitar_acentos
 
 # Etiqueta escrita por el cliente (ya limpia) -> campo interno.
 ETIQUETAS = {
-    "cedula": "cedula", "ci": "cedula", "c i": "cedula", "cedula de identidad": "cedula",
-    "documento": "cedula", "nro de cedula": "cedula", "numero de cedula": "cedula",
-    "nombre": "nombre", "nombres": "nombres",
-    "nombre completo": "nombre_completo", "cliente": "nombre_completo",
-    "nombre y apellido": "nombre_completo", "nombres y apellidos": "nombre_completo",
-    "apellido": "apellidos", "apellidos": "apellidos",
-    "direccion": "direccion", "dir": "direccion", "direccion de entrega": "direccion",
-    "entregar en": "direccion", "ubicacion": "direccion", "delivery": "direccion",
-    "fecha": "fecha", "dia": "fecha", "fecha de entrega": "fecha",
-    "hora": "hora", "hora de entrega": "hora",
-    "fecha y hora": "fecha_hora", "fecha hora": "fecha_hora", "para": "fecha_hora",
+    "cedula": "cedula",
+    "ci": "cedula",
+    "c i": "cedula",
+    "cedula de identidad": "cedula",
+    "documento": "cedula",
+    "nro de cedula": "cedula",
+    "numero de cedula": "cedula",
+    "nombre": "nombre",
+    "nombres": "nombres",
+    "nombre completo": "nombre_completo",
+    "cliente": "nombre_completo",
+    "nombre y apellido": "nombre_completo",
+    "nombres y apellidos": "nombre_completo",
+    "me llamo": "nombre_completo",
+    "apellido": "apellidos",
+    "apellidos": "apellidos",
+    "direccion": "direccion",
+    "dir": "direccion",
+    "direccion de entrega": "direccion",
+    "vivo en": "direccion",
+    "estoy en": "direccion",
+    "entregar en": "direccion",
+    "ubicacion": "direccion",
+    "delivery": "direccion",
+    "fecha": "fecha",
+    "dia": "fecha",
+    "fecha de entrega": "fecha",
+    "hora": "hora",
+    "hora de entrega": "hora",
+    "fecha y hora": "fecha_hora",
+    "fecha hora": "fecha_hora",
+    "para": "fecha_hora",
     "entrega": "fecha_hora",
-    "pedido": "pedido", "platos": "pedido", "orden": "pedido", "comida": "pedido",
-    "productos": "pedido", "quiero": "pedido",
-    "telefono": "otro", "tlf": "otro", "celular": "otro", "nota": "otro", "notas": "otro",
-    "observacion": "otro", "observaciones": "otro",
+    "pedido": "pedido",
+    "platos": "pedido",
+    "orden": "pedido",
+    "comida": "pedido",
+    "productos": "pedido",
+    "quiero": "pedido",
+    "telefono": "otro",
+    "tlf": "otro",
+    "celular": "otro",
+    "nota": "otro",
+    "notas": "otro",
+    "observacion": "otro",
+    "observaciones": "otro",
 }
 
-LINEA_ETIQUETA = re.compile(r"^\s*[-*•·]?\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ.\s/]{1,30}?)\s*[:=]\s*(.*)$")
+LINEA_ETIQUETA = re.compile(
+    r"^\s*[-*•·]?\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ.\s/]{1,30}?)\s*[:=]\s*(.*)$"
+)
 
 # Encabezado de un chat exportado/copiado de WhatsApp:
 #   "[11/11/26, 12:30:05] Maria: texto"   o   "11/11/2026, 12:30 p. m. - Maria: texto"
@@ -35,12 +67,25 @@ ENCABEZADO_CHAT = re.compile(
 )
 
 MESES = {
-    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6, "julio": 7,
-    "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
 }
 
 FECHA_NUMERICA = re.compile(r"\b(\d{1,2})\s*[/-]\s*(\d{1,2})(?:\s*[/-]\s*(\d{2,4}))?\b")
-FECHA_TEXTO = re.compile(r"\b(\d{1,2})\s+de\s+(" + "|".join(MESES) + r")(?:\s+(?:de\s+|del\s+)?(\d{4}))?\b")
+FECHA_TEXTO = re.compile(
+    r"\b(\d{1,2})\s+de\s+(" + "|".join(MESES) + r")(?:\s+(?:de\s+|del\s+)?(\d{4}))?\b"
+)
 
 HORA = re.compile(
     r"(?P<pre>\ba\s+las?\s+)?\b(?P<h>\d{1,2})(?:\s*[:h]\s*(?P<m>\d{2})\b)?\s*"
@@ -60,8 +105,28 @@ NOMBRE_EN_TEXTO = re.compile(
     r"\b(?:soy|me llamo|mi nombre es|a nombre de)\s+((?:[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+\s*){1,5})",
     re.IGNORECASE,
 )
-CORTE_NOMBRE = {"y", "quiero", "quisiera", "mi", "con", "para", "ci", "cedula", "cédula",
-                "les", "te", "le", "por", "del", "de", "el", "la", "desde", "en", "a"}
+CORTE_NOMBRE = {
+    "y",
+    "quiero",
+    "quisiera",
+    "mi",
+    "con",
+    "para",
+    "ci",
+    "cedula",
+    "cédula",
+    "les",
+    "te",
+    "le",
+    "por",
+    "del",
+    "de",
+    "el",
+    "la",
+    "desde",
+    "en",
+    "a",
+}
 
 
 def etiqueta_de(linea):
@@ -84,7 +149,7 @@ def quitar_encabezado_chat(linea):
     hora = normalizar_hora(encontrado.group(2) + " " + (encontrado.group(3) or ""))[0]
     if not fecha or not hora:
         return linea, None
-    return linea[encontrado.end():], f"{fecha} {hora}"
+    return linea[encontrado.end() :], f"{fecha} {hora}"
 
 
 def normalizar_cedula(texto):
@@ -130,7 +195,9 @@ def dividir_nombre_completo(nombre):
     if len(palabras) < 2:
         return capitalizar_nombre(nombre), ""
     corte = 2 if len(palabras) >= 4 else 1
-    return capitalizar_nombre(" ".join(palabras[:corte])), capitalizar_nombre(" ".join(palabras[corte:]))
+    return capitalizar_nombre(" ".join(palabras[:corte])), capitalizar_nombre(
+        " ".join(palabras[corte:])
+    )
 
 
 def _texto_fecha(texto):
@@ -175,7 +242,9 @@ def normalizar_hora(texto, solo_numero=False):
             continue
         hora, minutos = int(h), int(m or 0)
         suf = (suf or "").replace(".", "").replace(" ", "")
-        tarde = suf in ("pm", "delatarde", "delanoche") or (suf == "delmediodia" and hora < 12)
+        tarde = suf in ("pm", "delatarde", "delanoche") or (
+            suf == "delmediodia" and hora < 12
+        )
         if tarde and hora < 12:
             hora += 12
         if suf == "am" and hora == 12:
