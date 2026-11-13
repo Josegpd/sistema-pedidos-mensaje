@@ -1,0 +1,140 @@
+# Lote de mensajes de prueba para el parser.
+# Cada mensaje empieza con una línea "=== titulo ===".
+# Las pruebas automáticas (tests/test_parser.py) usan estos mismos mensajes.
+
+=== completo_etiquetado ===
+Cédula: V-12.345.678
+Nombres: Juan Carlos
+Apellidos: Pérez Gómez
+Dirección: Av. Bolívar, edificio Sol, piso 3
+Fecha: 15/11/2026
+Hora: 1:30 pm
+Pedido:
+- 2 hamburguesas clásicas
+- 1 refresco
+- 3 empanadas de queso
+
+=== completo_whatsapp ===
+[12/11/26, 11:05:12] Maria Gonzalez: Buenas! Quiero hacer un pedido
+[12/11/26, 11:05:40] Maria Gonzalez: CI: 20123456
+Nombre: Maria Gonzalez
+Dirección: Calle 5, casa 12, Los Olivos
+Hora: 12:30
+Pedido: 1 pizza pepperoni, 2 papas fritas y 2 jugos
+
+=== completo_una_linea_por_plato_variaciones ===
+Cédula: 9876543
+Nombre completo: Ana Lucía Rojas Díaz
+Dirección: Urb. El Paraíso, calle 2
+Fecha: mañana
+Hora: 7pm
+Pedido:
+* 1 hamburguesa doble (sin cebolla, sin tomate)
+* 2x papas extra queso
+* refresco x3
+
+=== texto_libre ===
+Hola, soy pedro ramirez, mi CI es V-15.222.333, quiero 2 empanadas de carne y una coca cola para hoy a la 1:30 pm
+Dirección: Sector La Floresta, casa 4
+
+=== incompleto_sin_direccion_ni_hora ===
+Cédula: 11222333
+Nombres: Luis
+Apellidos: Medina
+Pedido:
+- 1 reina pepiada
+
+=== incompleto_sin_platos ===
+Cédula: 11222333
+Nombres: Luis
+Apellidos: Medina
+Dirección: Calle Real 10
+Fecha: 15/11/2026
+Hora: 13:00
+
+=== lo_de_siempre ===
+Hola! Cédula: 12345678
+Quiero lo de siempre por favor
+Hora: 8 pm
+
+=== lo_de_siempre_con_extra ===
+Cédula: 12345678
+Pedido:
+- lo mismo de la otra vez
+- 1 jugo natural
+
+=== ambiguo_pizza ===
+Cédula: 13444555
+Nombres: Carla
+Apellidos: Suárez
+Dirección: Av. Principal 22
+Fecha: 15/11/2026
+Hora: 20:00
+Pedido:
+- 2 pizzas
+- 1 empanada
+
+=== no_reconocido ===
+Cédula: 13444555
+Nombres: Carla
+Apellidos: Suárez
+Dirección: Av. Principal 22
+Fecha: 15/11/2026
+Hora: 20:00
+Pedido:
+- 1 sushi
+- 1 refresco
+
+=== errores_de_tipeo ===
+Cédula: 14555666
+Nombres: Jorge
+Apellidos: Lara
+Dirección: Calle 8
+Fecha: 15/11/2026
+Hora: 19:00
+Pedido:
+- 2 hamburgesas
+- 1 piza peperoni
+
+=== duplicado_a ===
+Cédula: 16777888
+Nombres: Rosa
+Apellidos: Pinto
+Dirección: Calle Sucre 3
+Fecha: 15/11/2026
+Hora: 12:00
+Pedido:
+- 1 arepa reina pepiada
+
+=== duplicado_b ===
+Cédula: 16777888
+Nombres: Rosa
+Apellidos: Pinto
+Dirección: Calle Sucre 3
+Fecha: 15/11/2026
+Hora: 12:00
+Pedido:
+- 1 arepa reina pepiada
+
+=== plato_repetido_en_el_mensaje ===
+Cédula: 16777888
+Nombres: Rosa
+Apellidos: Pinto
+Dirección: Calle Sucre 3
+Fecha: 15/11/2026
+Hora: 12:00
+Pedido:
+- 2 refrescos
+- 1 refresco
+
+=== cedula_invalida ===
+Cédula: 123
+Nombres: Mario
+Apellidos: Bros
+Dirección: Calle 1
+Fecha: 15/11/2026
+Hora: 12:00
+Pedido: 1 refresco
+
+=== solo_saludo ===
+Hola, buenas tardes. ¿Están abiertos?

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "P001",
+    "nombre": "Hamburguesa clasica",
+    "precio": 5.0,
+    "alias": ["hamburguesa", "burger", "hamburguesa sencilla"]
+  },
+  {
+    "id": "P002",
+    "nombre": "Hamburguesa doble",
+    "precio": 7.5,
+    "alias": ["doble carne", "burger doble"]
+  },
+  {
+    "id": "P003",
+    "nombre": "Pizza margarita",
+    "precio": 8.0,
+    "alias": ["pizza", "margarita"]
+  },
+  {
+    "id": "P004",
+    "nombre": "Pizza pepperoni",
+    "precio": 9.0,
+    "alias": ["pizza", "peperoni", "pepperoni"]
+  },
+  {
+    "id": "P005",
+    "nombre": "Empanada de carne",
+    "precio": 1.5,
+    "alias": ["empanada carne"]
+  },
+  {
+    "id": "P006",
+    "nombre": "Empanada de queso",
+    "precio": 1.5,
+    "alias": ["empanada queso"]
+  },
+  {
+    "id": "P007",
+    "nombre": "Arepa reina pepiada",
+    "precio": 4.0,
+    "alias": ["reina pepiada", "pepiada", "reina"]
+  },
+  {
+    "id": "P008",
+    "nombre": "Papas fritas",
+    "precio": 2.5,
+    "alias": ["papas", "papitas", "fritas"]
+  },
+  {
+    "id": "P009",
+    "nombre": "Refresco",
+    "precio": 1.5,
+    "alias": ["refresco", "soda", "gaseosa", "coca cola", "coca", "pepsi"]
+  },
+  {
+    "id": "P010",
+    "nombre": "Jugo natural",
+    "precio": 2.0,
+    "alias": ["jugo", "jugo de naranja", "batido"]
+  }
+]
