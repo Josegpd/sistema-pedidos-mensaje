@@ -1,6 +1,6 @@
-from detalle_pedido import DetallePedido
-from mensaje_chat import Mensaje
-from pago import Pago
+from .detalle_pedido import DetallePedido
+from .mensaje_chat import Mensaje
+from .pago import Pago
 from random import randint
 
 class Pedido:

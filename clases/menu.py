@@ -1,4 +1,4 @@
-from plato import Plato
+from .plato import Plato
 
 class Menu:
     def __init__(self):

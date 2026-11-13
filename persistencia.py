@@ -1,15 +1,27 @@
 import os
 import json
-from cliente import Cliente
-from pedido import Pedido
-from pago import Pago
-from menu import Menu
-from plato import Plato
+from clases.cliente import Cliente
+from clases.pedido import Pedido
+from clases.pago import Pago
+from clases.menu import Menu
+from clases.plato import Plato
+
+# Definir la carpeta donde se almacenarán los archivos JSON de forma ordenada
+CARPETA_DATOS = "datos"
+
+# Construir las rutas relativas usando os.path.join (similar a reporte.py)
+RUTAS = {
+    "clientes": os.path.join(CARPETA_DATOS, "clientes.json"),
+    "menu": os.path.join(CARPETA_DATOS, "menu.json"),
+    "pedidos": os.path.join(CARPETA_DATOS, "pedidos.json"),
+    "pagos": os.path.join(CARPETA_DATOS, "pagos.json"),
+    "platos": os.path.join(CARPETA_DATOS, "platos.json"),
+}
 
 def cargar_json(ruta, por_defecto):
     """
     Carga un archivo JSON de forma segura.
-    Si el archivo no existe o esta corrupto, devuelve el valor por_defecto.
+    Si el archivo no existe o está corrupto, devuelve el valor por_defecto.
     """
     if not os.path.exists(ruta):
         return por_defecto
@@ -24,22 +36,18 @@ def cargar_json(ruta, por_defecto):
 def guardar_json(ruta, datos):
     """
     Guarda datos en un archivo JSON con formato legible.
+    Asegura que la carpeta contenedora exista antes de escribir el archivo.
     """
     try:
+        # Asegurarse de que la carpeta exista antes de guardar (como en reporte.py)
+        os.makedirs(os.path.dirname(ruta), exist_ok=True)
+        
         with open(ruta, "w", encoding="utf-8") as file:
             json.dump(datos, file, indent=4, ensure_ascii=False)
         return True
     except IOError as e:
         print(f"[Error] No se pudo guardar el archivo '{ruta}'. (Detalle: {e})")
         return False
-
-RUTAS = {
-    "clientes": "clientes.json",
-    "menu": "menu.json",
-    "pedidos": "pedidos.json",
-    "pagos": "pagos.json",
-    "platos": "platos.json",
-}
 
 """
     Carga todos los datos desde los archivos JSON y arma los índices 
