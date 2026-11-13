@@ -1,4 +1,4 @@
-from .models.pedido import Pedido
+from models.pedido import Pedido
 
 class ColaPedidos:
     def __init__(self):
