@@ -37,3 +37,20 @@ class Cliente:
     # Obtener la cantidad de dinero gastado
     def get_total_expense(self):
         return sum(pedido.get_total() for pedido in self.__order_history)
+    
+    def a_dict(self):
+        return {
+            "id": self.__id,
+            "nombres": self.__names,
+            "apellidos": self.__last_names,
+            "direccion": self.__address
+        }
+
+    @classmethod
+    def desde_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            nombres=d.get("nombres"),
+            apellidos=d.get("apellidos"),
+            direccion=d.get("direccion")
+        )

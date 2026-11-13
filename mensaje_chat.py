@@ -20,3 +20,24 @@ class Mensaje:
 
     def marcar_como_leido(self):
         self.__status = "Leído"
+
+    def a_dict(self):
+        """Convierte el mensaje a diccionario."""
+        return {
+            "id": self.__id,
+            "texto": self.__text,
+            "fecha_recepcion": self.__reception_date,
+            "estado": self.__status
+        }
+
+    @classmethod
+    def desde_dict(cls, d):
+        """Reconstruye el mensaje desde un diccionario."""
+        if not d:
+            return None
+        return cls(
+            id_msg = d.get("id"),
+            texto = d.get("texto"),
+            fecha_recepcion = d.get("fecha_recepcion"),
+            estado = d.get("estado", "Recibido")
+        )

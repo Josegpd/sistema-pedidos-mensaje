@@ -1,4 +1,6 @@
 from detalle_pedido import DetallePedido
+from mensaje_chat import Mensaje
+from pago import Pago
 from random import randint
 
 class Pedido:
@@ -88,3 +90,48 @@ class Pedido:
             f"Detalle de Platos:\n{detalles_str}\n"
             f"Total a pagar: ${self.calcular_monto_total():.2f}"
         )
+
+    def a_dict(self):
+        return {
+            "id": self.__id,
+            "hora": self.__hour,
+            "fecha": self.__date,
+            "total": self.__total,
+            "id_cliente": self.__client.get_id() if self.__client else None,
+            "mensaje": self.__message.a_dict() if self.__message else None,
+            "detalles": [detalle.a_dict() for detalle in self.__details],
+            "pagos": [pago.a_dict() for pago in self.__pay_data],
+            "estado": self.__status
+        }
+
+    @classmethod
+    def desde_dict(cls, d, clientes_dict, menu_obj):
+        id_cliente = d.get("id_cliente")
+        cliente = clientes_dict.get(id_cliente)
+        
+        # Reconstruir mensaje
+        msg_dict = d.get("mensaje")
+        mensaje = Mensaje.desde_dict(msg_dict) if msg_dict else None
+        
+        pedido = cls(
+            hora = d.get("hora"),
+            fecha = d.get("fecha"),
+            total = d.get("total"),
+            cliente = cliente,
+            mensaje = mensaje,
+            estado = d.get("estado", "Pendiente")
+        )
+        # Asignar el ID exacto que tenia guardado
+        pedido.__id = d.get("id")
+        
+        # Reconstruir detalles con el menu
+        for det_dict in d.get("detalles", []):
+            detalle = DetallePedido.desde_dict(det_dict, menu_obj)
+            pedido.__details.append(detalle)
+        
+        # Reconstruir pagos con el diccionario de clientes
+        for pago_dict in d.get("pagos", []):
+            pago = Pago.desde_dict(pago_dict, clientes_dict)
+            pedido.__pay_data.append(pago)
+        
+        return pedido
