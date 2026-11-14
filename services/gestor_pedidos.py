@@ -29,4 +29,11 @@ class GestorPedidos:
                     return True, f"El cliente {cedula_nueva} ya tiene un pedido para las {hora_nueva} (ID: {pedido.get_id()})."
 
         return False, ""
-    
+
+    # Registrar pedidos incompletos
+    def registrar_incompleto(self, datos_parser: dict) -> None:
+        self.pedidos_incompletos.append(datos_parser)
+
+    # Retorna lista de pedidos incompletos
+    def obtener_incompletos(self) -> list[dict]:
+        return self.pedidos_incompletos
