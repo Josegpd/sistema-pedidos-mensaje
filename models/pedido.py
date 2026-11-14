@@ -1,4 +1,4 @@
-from detalle_pedido import DetallePedido
+from .detalle_pedido import DetallePedido
 from random import randint
 
 class Pedido:
