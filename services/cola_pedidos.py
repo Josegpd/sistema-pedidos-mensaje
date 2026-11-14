@@ -72,7 +72,9 @@ class ColaPedidos:
         return None # Se retorna None si no hay ningún pedido con el ID pasado como parámetro
 
     # Retorna la lista de pedidos pendientes
-    def get_all(self):
+    def get_all(self) -> list[Pedido]:
         return list(self.pedidos_pendientes)
 
-    
+    # Método len sobrecargado
+    def __len__(self) -> int:
+        len(self.pedidos_pendientes)
