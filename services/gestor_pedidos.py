@@ -37,3 +37,33 @@ class GestorPedidos:
     # Retorna lista de pedidos incompletos
     def obtener_incompletos(self) -> list[dict]:
         return self.pedidos_incompletos
+
+    # confirmar y encolar pedido completo
+    def registrar_pedido_completo(self, pedido:Pedido) -> int:
+        self.historial.append(pedido)
+        pos = self.cola.enqueue(pedido)
+        return pos
+
+    # Marcar pedido como entregado
+    def marcar_como_entregado(self, id_pedido:int) -> bool:
+        pedido = self.cola.dequeue_by_id(id_pedido)
+
+        # Si el pedido existe, se marca como 'entregado'
+        if pedido:
+            pedido.set_estado("Entregado")
+            return True
+        
+        return False
+
+    # Marcar pedido como cancelado
+    def marcar_como_cancelado(self, id_pedido:int, motivo:str) -> bool:
+        pedido = self.cola.dequeue_by_id(id_pedido)
+
+        # Si el pedido existe, se marca como 'Cancelado''
+        if pedido:
+            pedido.set_estado(f"Cancelado: {motivo.strip}")
+            return True
+        
+        return False    
+
+    
