@@ -66,4 +66,33 @@ class GestorPedidos:
         
         return False    
 
+    def registro_de_pagos(self, pedido:Pedido, metodo_pago:str, referencia:str, monto:float) -> tuple[bool, float, str]:
+
+        saldo_pendiente = pedido.calcular_saldo_restante()
+
+        # Si no hay saldo pendiente
+        if saldo_pendiente <= 0:
+            return False, 0.0, "El pedido ya se encuentra completamente pagado"
+
+        # Validar que el monto no sea negativo ni cero
+        if monto <= 0:
+            return False, saldo_pendiente, "El monto debe ser mayor a cero"
+
+        # Establecer fecha de pago como la actual
+        fecha_pago = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        pago = Pago(
+            id=referencia,
+            cliente=pedido.get_cliente(),
+            fecha=fecha_pago,
+            metodo_pago=metodo_pago,
+            monto=monto
+        )
+
+        pedido.push_pago(pago)
+        nuevo_saldo = pedido.calcular_saldo_restante()
+
+        # Pago registrado exitosamente
+        return True, max(0.0,nuevo_saldo), "Pago registrado exitosamente"
+
     
