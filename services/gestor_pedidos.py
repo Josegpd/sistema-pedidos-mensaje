@@ -18,7 +18,7 @@ class GestorPedidos:
         hora_nueva = datos_parser.get("hora")
         texto_nuevo = datos_parser.get("texto_original", "").strip()
 
-        for pedido in self.historial_general:
+        for pedido in self.historial:
             # Coincidencia por texto idéntico
             if pedido.get_mensaje() and pedido.get_mensaje().get_text().strip() == texto_nuevo:
                 return True, f"Existe un pedido con el mismo texto exacto (ID: {pedido.get_id()})."
