@@ -12,4 +12,21 @@ class GestorPedidos:
         self.historial:list[Pedido] = []
         self.pedidos_incompletos:list[dict] = []
 
-        
+    # Deteccion de duplicados
+    def es_duplicado(self, datos_parser: dict) -> tuple[bool, str]:
+        cedula_nueva = datos_parser.get("cliente", {}).get("cedula")
+        hora_nueva = datos_parser.get("hora")
+        texto_nuevo = datos_parser.get("texto_original", "").strip()
+
+        for pedido in self.historial_general:
+            # Coincidencia por texto idéntico
+            if pedido.get_mensaje() and pedido.get_mensaje().get_text().strip() == texto_nuevo:
+                return True, f"Existe un pedido con el mismo texto exacto (ID: {pedido.get_id()})."
+
+            # Coincidencia por cliente y hora
+            if pedido.get_cliente() and pedido.get_cliente().get_id() == cedula_nueva:
+                if pedido.get_hora() == hora_nueva:
+                    return True, f"El cliente {cedula_nueva} ya tiene un pedido para las {hora_nueva} (ID: {pedido.get_id()})."
+
+        return False, ""
+    
