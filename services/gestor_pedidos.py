@@ -2,7 +2,7 @@ from datetime import datetime
 from models.pedido import Pedido
 from models.cliente import Cliente
 from models.pago import Pago
-from cola_pedidos import ColaPedidos
+from .cola_pedidos import ColaPedidos
 from parser_mensajes import calcular_faltantes
 
 
