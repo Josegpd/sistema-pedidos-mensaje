@@ -1,15 +1,22 @@
 class Plato:
-    def __init__(self, nombre: str, precio: float):
+    def __init__(self, id: str, nombre: str, precio: float):
+        self.__id = id
         self.__name = nombre # Incluye si el plato tiene una variacion
         self.__price = precio
         self.__orders = []
 
+    def get_id(self):
+        return self.__id
+    
     def get_name(self):
         return self.__name
 
     def get_price(self):
         return self.__price
 
+    def set_id(self, id: str):
+        self.__id = id
+    
     def set_name(self, new_name: str):
         self.__name = new_name
 
@@ -27,3 +34,18 @@ class Plato:
 
     def __str__(self):
         return self.__name
+
+    def a_dict(self):
+        return {
+            "id": self.__id,
+            "nombre": self.__name,
+            "precio": self.__price
+        }
+
+    @classmethod
+    def desde_dict(cls, d):
+        return cls(
+            id = d.get("id"),
+            nombre = d.get("nombre"),
+            precio = d.get("precio")
+        )

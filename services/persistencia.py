@@ -1,10 +1,10 @@
 import os
 import json
-from clases.cliente import Cliente
-from clases.pedido import Pedido
-from clases.pago import Pago
-from clases.menu import Menu
-from clases.plato import Plato
+from models.cliente import Cliente
+from models.pedido import Pedido
+from models.pago import Pago
+from models.menu import Menu
+from models.plato import Plato
 
 # Definir la carpeta donde se almacenarán los archivos JSON de forma ordenada
 CARPETA_DATOS = "datos"

@@ -1,3 +1,5 @@
+from .plato import Plato
+
 class Menu:
     def __init__(self):
         # Tabla Hash: La clave es el ID del plato y el valor es el objeto Plato
@@ -23,3 +25,15 @@ class Menu:
         for id, plato in self.__menu.items():
             print(f"[{id}] {plato.get_name()} - ${plato.get_price():.2f}")
         print("========================================")
+
+    def a_dict(self):
+        # Guarda todo el menú como una lista de diccionarios de platos
+        return [plato.a_dict() for plato in self.__menu.values()]
+
+    @classmethod
+    def desde_dict(cls, lista_platos_dict):
+        menu = cls()
+        for p_dict in lista_platos_dict:
+            plato = Plato.desde_dict(p_dict)
+            menu.agregar_plato_al_menu(plato.get_id(), plato)
+        return menu
