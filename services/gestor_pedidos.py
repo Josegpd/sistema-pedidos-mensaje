@@ -95,4 +95,13 @@ class GestorPedidos:
         # Pago registrado exitosamente
         return True, max(0.0,nuevo_saldo), "Pago registrado exitosamente"
 
+    # Búsqueda de pedido por ID en el historial
+    def buscar_en_historial(self, id_pedido: str) -> Pedido | None:
+        for p in self.historial:
+            if p.get_id == id_pedido:
+                return p
+
+        # Retorna None si el pedido no existe
+        return None
+
     
