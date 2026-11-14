@@ -2,7 +2,7 @@ from models.pedido import Pedido
 
 class ColaPedidos:
     def __init__(self):
-        self.pedidos_pendientes = []
+        self.pedidos_pendientes:list[Pedido] = []
 
     # Encolar pedido
     def enqueue(self, pedido:Pedido)->None:
@@ -29,7 +29,7 @@ class ColaPedidos:
         fin = len(self.pedidos_pendientes)-1
 
     # Método auxiliar que realiza la búsqueda binaria
-    def __binary_search(self, x, inicio, fin):
+    def __binary_search(self, x, inicio:int, fin:int):
         medio = (inicio+fin) // 2
         hora_medio = self.__change_hours_to_minutes(self.pedidos_pendientes[medio].get_hora())
 
@@ -53,3 +53,14 @@ class ColaPedidos:
             print("No hay pedidos pendientes")
 
         return self.pedidos_pendientes.pop(0)
+
+    # Extrae y retorna un pedido de la cola por ID
+    def dequeue_by_id(self, id_pedido:str)-> Pedido | None:
+        for i, pedido in enumerate(self.pedidos_pendientes):
+            if pedido.get_id() == id_pedido:
+                return self.pedidos_pendientes.pop(i) # Se elimina el pedido encontrado y se retorna
+
+        # retorna nulo si no encuentra el pedido
+        return None
+
+    
