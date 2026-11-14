@@ -125,7 +125,7 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
 
 def opcion_ver_cola(cola: ColaPedidos):
     print("\n--- COLA DE PEDIDOS PENDIENTES (Orden Cronológico) ---")
-    pendientes = cola.obtener_todos()
+    pendientes = cola.get_all()
     if not pendientes:
         print("No hay pedidos pendientes en cola.")
         return
