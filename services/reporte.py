@@ -1,4 +1,4 @@
-from clases.detalle_pedido import DetallePedido
+from models.detalle_pedido import DetallePedido
 from datetime import date
 import os
 import sys
