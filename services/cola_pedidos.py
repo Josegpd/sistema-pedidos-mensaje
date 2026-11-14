@@ -64,11 +64,15 @@ class ColaPedidos:
         return None
 
     # Consulta un pedido en la cola por ID sin extraerlo
-    def get_by_id(self, id_pedido:str):
+    def get_by_id(self, id_pedido:str) -> Pedido | None:
         for pedido in self.pedidos_pendientes:
             if pedido.get_id() == id_pedido:
                 return pedido
 
         return None # Se retorna None si no hay ningún pedido con el ID pasado como parámetro
+
+    # Retorna la lista de pedidos pendientes
+    def get_all(self):
+        return list(self.pedidos_pendientes)
 
     
