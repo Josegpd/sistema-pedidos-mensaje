@@ -23,9 +23,10 @@ INTRODUCCION = re.compile(
 )
 
 CAMPOS_CLIENTE = ("cedula", "nombres", "apellidos", "direccion")
-# Lo único indispensable para despachar un pedido. Cédula y apellido son
-# opcionales; si falta la fecha o la hora se asume el momento actual.
-CAMPOS_OBLIGATORIOS = ("nombres", "direccion")
+# Lo indispensable para registrar un pedido. La cédula identifica al cliente en
+# el resto del sistema. El apellido es opcional; si falta la fecha o la hora se
+# asume el momento actual.
+CAMPOS_OBLIGATORIOS = ("cedula", "nombres", "direccion")
 NOMBRES_CAMPOS = {
     "cedula": "cédula", "nombres": "nombres", "apellidos": "apellidos",
     "direccion": "dirección", "fecha": "fecha", "hora": "hora", "platos": "platos",
@@ -160,9 +161,9 @@ def calcular_faltantes(pedido):
     Úsala de nuevo después de cambiar el pedido a mano (por ejemplo, al rellenar
     los datos del cliente registrado o resolver "lo de siempre").
 
-    Obligatorio: platos entendidos, nombre y dirección. La fecha y la hora solo
-    faltan si el cliente las escribió de forma que no se entendió. Cédula y
-    apellido son opcionales. Los extras no impiden registrar el pedido.
+    Obligatorio: platos entendidos, cédula, nombre y dirección. La fecha y la
+    hora solo faltan si el cliente las escribió de forma que no se entendió. El
+    apellido es opcional. Los extras no impiden registrar el pedido.
     """
     cliente = pedido["cliente"]
     faltan = [c for c in CAMPOS_OBLIGATORIOS if not cliente.get(c)]

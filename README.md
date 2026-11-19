@@ -100,10 +100,11 @@ pedido["fecha_recepcion"], pedido["texto_original"]   # para MensajeChat
 | Dato | Regla |
 |---|---|
 | Platos | **obligatorio**: al menos uno entendido (o "lo de siempre") y ningún ambiguo |
+| Cédula | **obligatoria** (identifica al cliente en el registro y en la detección de duplicados) |
 | Nombre | **obligatorio** |
 | Dirección | **obligatoria** |
 | Fecha y hora | si no vienen se asume el momento actual (o el de recepción del chat); si vienen mal escritas se preguntan |
-| Cédula y apellido | opcionales; si vienen mal escritas se descartan y queda el aviso para el cliente |
+| Apellido | opcional; si viene mal escrito se descarta y queda el aviso para el cliente |
 
 ### Pedidos incompletos: solo pasan datos correctos
 

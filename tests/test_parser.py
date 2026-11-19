@@ -71,14 +71,16 @@ class TestLote(unittest.TestCase):
         self.assertEqual(p["faltantes"], ["direccion"])
         self.assertEqual((p["fecha"], p["hora"]), ("2026-11-12", "16:00"))   # se asume ahora
         self.assertEqual(analizar("incompleto_sin_platos")["faltantes"], ["platos"])
-        self.assertEqual(analizar("solo_saludo")["faltantes"], ["nombres", "direccion", "platos"])
+        self.assertEqual(analizar("solo_saludo")["faltantes"],
+                         ["cedula", "nombres", "direccion", "platos"])
 
-    def test_cedula_y_apellido_son_opcionales(self):
+    def test_cedula_obligatoria_y_apellido_opcional(self):
         texto = "Nombre: Luis\nDirección: Calle Real 10\nPedido: 1 jugo"
         p = analizar_mensaje(texto, CATALOGO, hoy=HOY, ahora=AHORA)
-        self.assertIsNone(p["cliente"]["cedula"])
+        self.assertEqual(p["faltantes"], ["cedula"])
+        self.assertFalse(p["completo"])
+        self.assertIsNone(completar_campo(p, "cedula", "20111222", HOY))
         self.assertIsNone(p["cliente"]["apellidos"])
-        self.assertEqual(p["faltantes"], [])
         self.assertTrue(p["completo"])
 
     def test_lo_de_siempre(self):
@@ -123,8 +125,9 @@ class TestLote(unittest.TestCase):
 
     def test_cedula_invalida(self):
         p = analizar("cedula_invalida")
-        self.assertIsNone(p["cliente"]["cedula"])             # opcional: no bloquea
-        self.assertTrue(p["completo"])
+        self.assertIsNone(p["cliente"]["cedula"])
+        self.assertEqual(p["faltantes"], ["cedula"])
+        self.assertFalse(p["completo"])
         self.assertIn("no es válida", p["invalidos"]["cedula"])
         self.assertIn("no es válida", mensajes_para_cliente(p)[0])
 
@@ -139,7 +142,7 @@ class TestLote(unittest.TestCase):
     def test_datos_mal_escritos(self):
         p = analizar("datos_mal_escritos")
         self.assertEqual(set(p["invalidos"]), {"cedula", "nombres", "direccion", "fecha", "hora"})
-        self.assertEqual(p["faltantes"], ["nombres", "direccion", "fecha", "hora"])
+        self.assertEqual(p["faltantes"], ["cedula", "nombres", "direccion", "fecha", "hora"])
         self.assertIsNone(p["cliente"]["nombres"])
         self.assertFalse(p["completo"])
         mensajes = mensajes_para_cliente(p)
@@ -173,6 +176,7 @@ class TestCompletar(unittest.TestCase):
     def test_completar_campo_valida_y_normaliza(self):
         p = analizar("datos_mal_escritos")
         p["cliente"]["nombres"] = "Mario"
+        self.assertIsNone(completar_campo(p, "cedula", "V-20.111.222", HOY))
         self.assertIn("No entendimos la hora", completar_campo(p, "hora", "a la hora de siempre", HOY))
         self.assertIsNone(p["hora"])
         self.assertIsNone(completar_campo(p, "hora", "1:30 pm", HOY))
@@ -207,6 +211,7 @@ class TestCompletar(unittest.TestCase):
         respuestas = iter([
             "9",                       # opción inválida
             "2",                       # Pizza pepperoni
+            "12", "V-12.345.678",      # cédula inválida y luego válida
             "Mario123", "Mario",       # nombre inválido y luego válido
             "Av. Lara, casa 5",        # dirección
             "el finde", "15/11/2026",  # fecha
@@ -216,10 +221,10 @@ class TestCompletar(unittest.TestCase):
         listo = completar_pedido(p, CATALOGO, leer=lambda _: next(respuestas),
                                  mostrar=salida.append, hoy=HOY)
         self.assertTrue(listo)
-        self.assertIsNone(p["cliente"]["cedula"])           # opcional: no se pregunta
+        self.assertEqual(p["cliente"]["cedula"], "V-12345678")
         self.assertEqual((p["fecha"], p["hora"]), ("2026-11-15", "20:00"))
         self.assertEqual(platos(p), {"P009": 1, "P004": 2})
-        self.assertEqual(list(p["invalidos"]), ["cedula"])  # queda solo como aviso
+        self.assertEqual(p["invalidos"], {})
         self.assertTrue(any("Opción no válida" in s for s in salida))
 
     def test_completar_pedido_cancelar(self):
