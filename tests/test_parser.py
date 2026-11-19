@@ -9,8 +9,15 @@ from pathlib import Path
 
 from parser_mensajes import (
     Catalogo, agregar_platos, analizar_mensaje, calcular_faltantes, completar_campo,
-    completar_pedido, leer_lote, mensajes_para_cliente, resolver_ambiguo, separar_lote,
+    completar_pedido, confirmar_pedido, leer_lote, mensajes_para_cliente, resolver_ambiguo,
+    separar_lote,
 )
+
+
+def responder(*respuestas):
+    """Simula lo que escribe el operador, en orden."""
+    it = iter(respuestas)
+    return lambda _: next(it)
 from parser_mensajes.campos import normalizar_cedula, normalizar_fecha, normalizar_hora
 from parser_mensajes.entrada import leer_mensaje_pegado
 
@@ -226,6 +233,43 @@ class TestCompletar(unittest.TestCase):
         self.assertEqual(platos(p), {"P009": 1, "P004": 2})
         self.assertEqual(p["invalidos"], {})
         self.assertTrue(any("Opción no válida" in s for s in salida))
+
+    def test_confirmar_directo(self):
+        p = analizar("completo_etiquetado")
+        self.assertTrue(confirmar_pedido(p, CATALOGO, leer=responder("1"),
+                                         mostrar=lambda *_: None, hoy=HOY))
+
+    def test_confirmar_con_correcciones(self):
+        p = analizar("completo_etiquetado")
+        listo = confirmar_pedido(p, CATALOGO, mostrar=lambda *_: None, hoy=HOY, leer=responder(
+            "2", "4", "Av. Lara, casa 5",          # corregir dirección
+            "2", "6", "lueguito", "8pm",            # hora inválida y luego válida
+            "2", "3", "",                            # borrar apellido (opcional)
+            "2", "8", "2",                           # quitar el refresco
+            "2", "7", "1 jugo",                      # agregar un jugo
+            "1",                                     # confirmar
+        ))
+        self.assertTrue(listo)
+        self.assertEqual(p["cliente"]["direccion"], "Av. Lara, casa 5")
+        self.assertEqual(p["hora"], "20:00")
+        self.assertFalse(any("hora" in a for a in p["advertencias"]))
+        self.assertIsNone(p["cliente"]["apellidos"])
+        self.assertEqual(platos(p), {"P001": 2, "P006": 3, "P010": 1})
+
+    def test_quitar_todos_los_platos_vuelve_a_preguntar(self):
+        p = analizar("plato_repetido_en_el_mensaje")      # solo tiene refrescos
+        listo = confirmar_pedido(p, CATALOGO, mostrar=lambda *_: None, hoy=HOY, leer=responder(
+            "2", "8", "1",           # quitar el único plato -> queda incompleto
+            "2 empanadas de carne",  # completar_pedido pide platos otra vez
+            "1",
+        ))
+        self.assertTrue(listo)
+        self.assertEqual(platos(p), {"P005": 2})
+
+    def test_confirmar_cancelar(self):
+        p = analizar("completo_etiquetado")
+        self.assertFalse(confirmar_pedido(p, CATALOGO, leer=responder("0"),
+                                          mostrar=lambda *_: None, hoy=HOY))
 
     def test_completar_pedido_cancelar(self):
         p = analizar("solo_saludo")

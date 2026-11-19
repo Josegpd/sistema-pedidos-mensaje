@@ -1,5 +1,7 @@
 """Lectura de mensajes pegados en la terminal o guardados en archivos."""
 
+from utils import estilo as e
+
 MARCA_FIN = "FIN"
 
 
@@ -12,7 +14,8 @@ def leer_mensaje_pegado(leer=input, mostrar=print):
     Las líneas en blanco dentro del mensaje se conservan. Devuelve el texto sin
     espacios sobrantes al inicio y final.
     """
-    mostrar(f"Pega el mensaje y escribe {MARCA_FIN} en una línea sola para terminar:")
+    mostrar(e.negrita("  Pegue el mensaje del cliente.")
+            + e.tenue(f" Termine con {MARCA_FIN} en una línea sola (o al final de la última)."))
     lineas = []
     while True:
         try:

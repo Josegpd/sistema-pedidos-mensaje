@@ -7,6 +7,8 @@ from .campos import (
     NOMBRES_LARGOS, buscar_cedula, buscar_nombre, dividir_nombre_completo, etiqueta_de,
     normalizar_fecha, normalizar_hora, quitar_encabezado_chat, validar_campo,
 )
+from utils import estilo as e
+
 from .normalizar import capitalizar_nombre, quitar_acentos
 from .platos import analizar_item, separar_items
 
@@ -201,33 +203,49 @@ def mensajes_para_cliente(pedido):
 
 
 def resumen_para_operador(pedido):
-    """Texto legible para mostrar en la terminal."""
+    """Tarjeta del pedido para mostrar en la terminal (con colores si se puede)."""
     cliente = pedido["cliente"]
+    nombre = " ".join(filter(None, (cliente["nombres"], cliente["apellidos"])))
+    entrega = None
+    if pedido["fecha"] and pedido["hora"]:
+        entrega = f"{date.fromisoformat(pedido['fecha']).strftime('%d/%m/%Y')} · {pedido['hora']}"
     lineas = [
-        f"Cédula:    {cliente['cedula'] or '-'}",
-        f"Nombres:   {cliente['nombres'] or '-'}",
-        f"Apellidos: {cliente['apellidos'] or '-'}",
-        f"Dirección: {cliente['direccion'] or '-'}",
-        f"Fecha:     {pedido['fecha'] or '-'}    Hora: {pedido['hora'] or '-'}",
-        "Platos:",
+        e.titulo("Pedido"),
+        e.campo("Cliente", nombre if cliente["nombres"] else None),
+        e.campo("Cédula", cliente["cedula"]),
+        e.campo("Dirección", cliente["direccion"]),
+        e.campo("Entrega", entrega),
+        "",
+        "  " + e.negrita("Platos"),
     ]
     for plato in pedido["platos"]:
-        extra = f" ({plato['variacion']})" if plato["variacion"] else ""
-        lineas.append(f"  {plato['cantidad']} x {plato['nombre']}{extra}  -> {plato['cantidad'] * plato['precio']:.2f}")
-    if pedido["lo_de_siempre"]:
-        lineas.append("  * Pidió \"lo de siempre\": buscar en su historial.")
-    if not pedido["platos"] and not pedido["lo_de_siempre"]:
-        lineas.append("  (ninguno)")
+        izquierda = f"   {plato['cantidad']:>2} × {plato['nombre']}"
+        importe = f"{plato['cantidad'] * plato['precio']:.2f}"
+        lineas.append(izquierda.ljust(e.ANCHO - len(importe)) + importe)
+        if plato["variacion"]:
+            lineas.append(e.tenue(f"        {plato['variacion']}"))
+    for item in pedido["ambiguos"]:
+        lineas.append(e.amarillo(f"   ?  {item['texto']} (¿cuál?)"))
     for item in pedido["extras"]:
-        lineas.append(f"  + Extra (fuera del menú): {item['texto']}")
-    lineas.append(f"Total estimado: {pedido['total_estimado']:.2f}")
-    for aviso in pedido["advertencias"]:
-        lineas.append(f"Aviso: {aviso}")
+        lineas.append(e.magenta(f"   +  {item['texto']} (extra, fuera del menú)"))
+    if pedido["lo_de_siempre"]:
+        lineas.append(e.cian("   ↺  \"Lo de siempre\": buscar en su historial"))
+    if not (pedido["platos"] or pedido["ambiguos"] or pedido["extras"] or pedido["lo_de_siempre"]):
+        lineas.append("   " + e.rojo("ninguno"))
+    total = f"{pedido['total_estimado']:.2f}"
+    lineas += ["  " + e.tenue("─" * (e.ANCHO - 2)),
+               "  " + e.negrita("Total".ljust(e.ANCHO - 2 - len(total)) + total)]
+
+    if pedido["advertencias"]:
+        lineas.append("")
+        lineas += ["  " + e.aviso(a) for a in pedido["advertencias"]]
     mensajes = mensajes_para_cliente(pedido)
     if mensajes:
-        lineas.append("Para el cliente:")
-        lineas += [f"  - {m}" for m in mensajes]
-    lineas.append("Estado: " + ("COMPLETO" if pedido["completo"] else "INCOMPLETO"))
+        lineas += ["", "  " + e.negrita("Para el cliente")]
+        lineas += ["  " + e.info(m) for m in mensajes]
+    lineas.append("")
+    lineas.append("  " + (e.ok("COMPLETO") if pedido["completo"] else e.error("INCOMPLETO")))
+    lineas.append(e.cierre())
     return "\n".join(lineas)
 
 

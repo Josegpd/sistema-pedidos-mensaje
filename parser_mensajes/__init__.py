@@ -13,7 +13,10 @@ Uso típico desde otro módulo:
 """
 
 from .campos import validar_campo
-from .completar import agregar_platos, completar_campo, completar_pedido, resolver_ambiguo
+from .completar import (
+    agregar_platos, completar_campo, completar_pedido, confirmar_pedido, quitar_plato,
+    resolver_ambiguo,
+)
 from .entrada import leer_lote, leer_mensaje_pegado, separar_lote
 from .parser import analizar_mensaje, calcular_faltantes, mensajes_para_cliente, resumen_para_operador
 from .platos import Catalogo
@@ -25,6 +28,8 @@ __all__ = [
     "calcular_faltantes",
     "completar_campo",
     "completar_pedido",
+    "confirmar_pedido",
+    "quitar_plato",
     "leer_lote",
     "leer_mensaje_pegado",
     "mensajes_para_cliente",

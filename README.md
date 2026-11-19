@@ -20,6 +20,7 @@ datos/menu.json         menú de ejemplo (con alias por plato)
 pruebas/mensajes_prueba.txt   lote de mensajes de prueba
 tests/test_parser.py    pruebas automáticas
 probar_parser.py        prueba del parser por terminal
+utils/estilo.py         colores, recuadros y símbolos para la terminal (para todo el equipo)
 ```
 
 ## Cómo probar
@@ -123,7 +124,14 @@ for frase in mensajes_para_cliente(pedido):   # lo que hay que decirle al client
 completar_pedido(pedido, catalogo)   # pregunta al operador solo lo que falta, valida cada
                                      # respuesta y deja elegir la opción de los ambiguos.
                                      # 'cancelar' lo deja pendiente. Devuelve True si quedó completo.
+
+confirmar_pedido(pedido, catalogo)   # completa lo que falte y muestra el resumen final con
+                                     # [1] Confirmar  [2] Corregir un dato  [0] Cancelar.
+                                     # Devuelve True solo si el operador confirma.
 ```
+
+Recomendado para el menú principal: `analizar_mensaje()` → rellenar datos del cliente
+registrado → `confirmar_pedido()` → si devuelve True, crear el `Pedido` y encolarlo.
 
 Funciones sueltas, por si el menú quiere preguntar a su manera:
 `completar_campo(pedido, campo, valor)` (devuelve el error o None),
