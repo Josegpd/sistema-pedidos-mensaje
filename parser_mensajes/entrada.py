@@ -6,20 +6,25 @@ MARCA_FIN = "FIN"
 def leer_mensaje_pegado(leer=input, mostrar=print):
     """Lee un mensaje de varias líneas pegado en la terminal.
 
-    Termina cuando el usuario escribe FIN en una línea sola, o con Ctrl+Z y
-    Enter (Windows) / Ctrl+D (Linux y Mac). Las líneas en blanco dentro del
-    mensaje se conservan. Devuelve el texto sin espacios sobrantes al inicio y final.
+    Termina cuando el usuario escribe FIN en una línea sola (en cualquier
+    combinación de mayúsculas), cuando una línea acaba en " FIN" en mayúsculas
+    ("Quiero 2 pizzas FIN"), o con Ctrl+Z y Enter (Windows) / Ctrl+D (Linux y Mac).
+    Las líneas en blanco dentro del mensaje se conservan. Devuelve el texto sin
+    espacios sobrantes al inicio y final.
     """
     mostrar(f"Pega el mensaje y escribe {MARCA_FIN} en una línea sola para terminar:")
     lineas = []
     while True:
         try:
-            linea = leer()
+            linea = leer().lstrip("﻿").rstrip()
         except EOFError:
             break
         if linea.strip().upper() == MARCA_FIN:
             break
-        lineas.append(linea.rstrip())
+        if linea.endswith(" " + MARCA_FIN):
+            lineas.append(linea[: -len(MARCA_FIN)].rstrip())
+            break
+        lineas.append(linea)
     return "\n".join(lineas).strip()
 
 

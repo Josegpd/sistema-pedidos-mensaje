@@ -74,7 +74,7 @@ Pedido:
 - 2 pizzas
 - 1 empanada
 
-=== no_reconocido ===
+=== plato_fuera_del_menu ===
 Cédula: 13444555
 Nombres: Carla
 Apellidos: Suárez
@@ -133,6 +133,24 @@ Nombres: Mario
 Apellidos: Bros
 Dirección: Calle 1
 Fecha: 15/11/2026
+Hora: 12:00
+Pedido: 1 refresco
+
+=== datos_mal_escritos ===
+Cédula: 123
+Nombres: Mario 2
+Apellidos: Bros
+Dirección: C1
+Fecha: el finde
+Hora: cuando puedan
+Pedido: 1 refresco
+
+=== fecha_pasada ===
+Cédula: 16777888
+Nombres: Rosa
+Apellidos: Pinto
+Dirección: Calle Sucre 3
+Fecha: 01/11/2026
 Hora: 12:00
 Pedido: 1 refresco
 

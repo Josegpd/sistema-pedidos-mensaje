@@ -67,7 +67,7 @@ class Catalogo:
 
     def resumen(self, id_plato):
         plato = self.platos[id_plato]
-        return {"id": plato["id"], "nombre": plato["nombre"]}
+        return {"id": plato["id"], "nombre": plato["nombre"], "precio": plato.get("precio", 0)}
 
 
 def _unir(listas):

@@ -8,7 +8,10 @@ import json
 import sys
 from pathlib import Path
 
-from parser_mensajes import Catalogo, analizar_mensaje, leer_lote, leer_mensaje_pegado, resumen_para_operador
+from parser_mensajes import (
+    Catalogo, analizar_mensaje, completar_pedido, leer_lote, leer_mensaje_pegado,
+    resumen_para_operador,
+)
 
 RAIZ = Path(__file__).parent
 RUTA_MENU = RAIZ / "datos" / "menu.json"
@@ -42,7 +45,12 @@ def main():
         if opcion in ("1", "2"):
             texto = leer_mensaje_pegado()
             if texto:
-                mostrar(analizar_mensaje(texto, catalogo), como_json=opcion == "2")
+                pedido = analizar_mensaje(texto, catalogo)
+                mostrar(pedido, como_json=opcion == "2")
+                if not pedido["completo"]:
+                    print("\nFalta información. Pídala al cliente y escríbala aquí:")
+                    if completar_pedido(pedido, catalogo):
+                        mostrar(pedido, como_json=opcion == "2")
             else:
                 print("No se pegó ningún mensaje.")
         elif opcion == "3":
