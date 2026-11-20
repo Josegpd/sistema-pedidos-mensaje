@@ -5,7 +5,11 @@ from models.mensaje_chat import Mensaje
 from services.cola_pedidos import ColaPedidos
 from services.gestor_pedidos import GestorPedidos
 from services.clientes_service import ClientesService
+from services.directorio_clientes import (
+    GestorClientes, mostrar_directorio_clientes, pedir_y_consultar_historial
+)
 from services.reporte import generar_reporte_del_dia
+from utils.consola import limpiar_pantalla, pausar
 from utils.validaciones import (
     leer_opcion_menu, leer_entero, leer_float_positivo, leer_texto_no_vacio, confirmar_accion
 )
@@ -21,7 +25,7 @@ def mostrar_menu_principal():
     print(" 3) Cambiar estado de un pedido (Entregar / Cancelar)")
     print(" 4) Registrar pago a un pedido")
     print(" 5) Bandeja de pedidos incompletos")
-    print(" 6) Consultar cliente / promociones")
+    print(" 6) Clientes: directorio, historial y promociones")
     print(" 7) Mostrar catálogo de platos")
     print(" 8) Cerrar turno y generar reporte de ventas del día")
     print(" 0) Salir")
@@ -225,6 +229,32 @@ def opcion_pedidos_incompletos(gestor: GestorPedidos, catalogo: Catalogo, client
     else:
         print(f"Aún faltan campos: {p_incompleto.get('faltantes')}")
 
+def opcion_consultar_cliente(clientes_srv: ClientesService):
+    ced = leer_texto_no_vacio("Ingrese cédula del cliente: ")
+    c = clientes_srv.buscar_por_cedula(ced)
+    if c:
+        print(f"Cliente: {c.get_names()} {c.get_last_names()} | Dir: {c.get_address()}")
+        print(f"Historial: {len(c.get_order_history())} pedidos.")
+        print(f"Sugerencia: {clientes_srv.obtener_promocion(c)}")
+    else:
+        print("Cliente no encontrado en el sistema.")
+
+def opcion_clientes(clientes_srv: ClientesService):
+    directorio = GestorClientes(clientes_srv)
+    print("\n--- CLIENTES ---")
+    print("1) Ver directorio de clientes registrados")
+    print("2) Consultar historial de compras (por cédula o nombre)")
+    print("3) Consultar cliente / promoción (por cédula)")
+    print("0) Volver")
+    sub_op = leer_opcion_menu("Seleccione acción: ", ["1", "2", "3", "0"])
+
+    if sub_op == "1":
+        mostrar_directorio_clientes(directorio)
+    elif sub_op == "2":
+        pedir_y_consultar_historial(directorio)
+    elif sub_op == "3":
+        opcion_consultar_cliente(clientes_srv)
+
 def main():
     try:
         catalogo = Catalogo.desde_archivo(RUTA_MENU)
@@ -237,6 +267,7 @@ def main():
     clientes_srv = ClientesService()
 
     while True:
+        limpiar_pantalla()
         mostrar_menu_principal()
         opcion = leer_opcion_menu("Seleccione una opción: ", ["1", "2", "3", "4", "5", "6", "7", "8", "0"])
 
@@ -251,14 +282,7 @@ def main():
         elif opcion == "5":
             opcion_pedidos_incompletos(gestor, catalogo, clientes_srv)
         elif opcion == "6":
-            ced = leer_texto_no_vacio("Ingrese cédula del cliente: ")
-            c = clientes_srv.buscar_por_cedula(ced)
-            if c:
-                print(f"Cliente: {c.get_names()} {c.get_last_names()} | Dir: {c.get_address()}")
-                print(f"Historial: {len(c.get_order_history())} pedidos.")
-                print(f"Sugerencia: {clientes_srv.obtener_promocion(c)}")
-            else:
-                print("Cliente no encontrado en el sistema.")
+            opcion_clientes(clientes_srv)
         elif opcion == "7":
             catalogo.mostrar_menu() if hasattr(catalogo, "mostrar_menu") else print(catalogo)
         elif opcion == "8":
@@ -273,6 +297,11 @@ def main():
             if confirmar_accion("¿Seguro que desea salir del sistema?"):
                 print("\nCerrando sistema. ¡Buen turno!")
                 break
+            continue  # no se canceló nada que leer: se vuelve directo al menú
+
+        # Deja el resultado a la vista hasta que el operador lo lea; luego se
+        # borra y el menú vuelve a mostrarse solo.
+        pausar()
 
 if __name__ == "__main__":
     try:
