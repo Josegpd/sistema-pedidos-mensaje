@@ -75,7 +75,7 @@ class Pedido:
     def calcular_monto_total(self) -> float:
         return sum(detalle.calcular_subtotal() for detalle in self.__details)
 
-    # Devoler el saldo restante a pagar
+    # Devolver el saldo restante a pagar
     def calcular_saldo_restante(self) -> float:
         total_pagado = sum(pago.get_monto() for pago in self.__pay_data)
         return self.__total - total_pagado
