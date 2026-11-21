@@ -10,7 +10,7 @@ class ColaPedidos:
         # El pedido quedará en su orden cronológico como 'Pendiente' 
         pedido.set_estado("Pendiente")
 
-        pos = self.__search_position(pedido.get_hora())
+        pos = self.__search_position(pedido)
         self.pedidos_pendientes.insert(pos, pedido)
         return pos # Posición (índice) en la que quedó el pedido
 
@@ -22,16 +22,20 @@ class ColaPedidos:
         # partes[0] = 'HH' y partes[1] = 'MM'
         return int(partes[0])*60 + int(partes[1])
 
+    # Clave de orden: primero la fecha ('YYYY-MM-DD' se ordena bien como texto) y luego la hora
+    def __clave(self, pedido:Pedido) -> tuple[str, int]:
+        return (pedido.get_fecha() or "", self.__change_hours_to_minutes(pedido.get_hora()))
+
     # Buscar el índice para insertar un nuevo elemento a través de búsqueda binaria
-    def __search_position(self, hora_nuevo_str:str)->int:
-        valor_nuevo = self.__change_hours_to_minutes(hora_nuevo_str)
+    def __search_position(self, pedido_nuevo:Pedido)->int:
+        valor_nuevo = self.__clave(pedido_nuevo)
         inicio = 0
         fin = len(self.pedidos_pendientes)
 
-        # Búsqueda binaria: el pedido va después de los que tienen la misma hora o una anterior
+        # Búsqueda binaria: el pedido va después de los que tienen la misma fecha y hora o una anterior
         while inicio < fin:
             medio = (inicio + fin) // 2
-            hora_medio = self.__change_hours_to_minutes(self.pedidos_pendientes[medio].get_hora())
+            hora_medio = self.__clave(self.pedidos_pendientes[medio])
 
             if hora_medio <= valor_nuevo:
                 inicio = medio + 1
@@ -46,6 +50,7 @@ class ColaPedidos:
     def dequeue(self):
         if self.is_empty():
             print("No hay pedidos pendientes")
+            return None
 
         return self.pedidos_pendientes.pop(0)
 

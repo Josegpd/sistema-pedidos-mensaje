@@ -73,6 +73,9 @@ def cargar_todo():
     for p_dict in datos_pedidos:
         pedido = Pedido.desde_dict(p_dict, clientes, menu)
         pedidos.append(pedido)
+        # Reenlazar el pedido al historial de su cliente ("lo de siempre" y promociones lo usan)
+        if pedido.get_cliente():
+            pedido.get_cliente().push_new_order(pedido)
 
     pagos = []
     for pago_dict in datos_pagos:

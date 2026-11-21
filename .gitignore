@@ -6,3 +6,10 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Datos que genera el programa al usarse (no se suben)
+datos/clientes.json
+datos/pedidos.json
+datos/pagos.json
+datos/platos.json
+registros/

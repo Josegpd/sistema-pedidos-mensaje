@@ -60,7 +60,7 @@ class GestorPedidos:
 
         # Si el pedido existe, se marca como 'Cancelado''
         if pedido:
-            pedido.set_estado(f"Cancelado: {motivo.strip}")
+            pedido.set_estado(f"Cancelado: {motivo.strip()}")
             return True
         
         return False    
@@ -76,6 +76,10 @@ class GestorPedidos:
         # Validar que el monto no sea negativo ni cero
         if monto <= 0:
             return False, saldo_pendiente, "El monto debe ser mayor a cero"
+
+        # No se puede pagar más de lo que se debe
+        if monto > saldo_pendiente + 0.001:
+            return False, saldo_pendiente, f"El monto supera el saldo pendiente (${saldo_pendiente:.2f})"
 
         # Establecer fecha de pago como la actual
         fecha_pago = datetime.now().strftime("%Y-%m-%d %H:%M")

@@ -254,3 +254,67 @@ def normalizar_hora(texto, solo_numero=False):
         dudosa = not suf and 1 <= hora <= 11
         return f"{hora:02d}:{minutos:02d}", dudosa
     return None, False
+
+
+# --- Validación de un campo suelto (lo usan el parser y el flujo de completar) ---
+
+EJEMPLOS = {
+    "cedula": "V-12345678",
+    "nombres": "Ana María",
+    "apellidos": "Pérez Gómez",
+    "direccion": "Av. Bolívar, edificio Sol, piso 3",
+    "fecha": "15/11/2026, 'hoy' o 'mañana'",
+    "hora": "13:30 o 1:30 pm",
+}
+
+SOLO_LETRAS = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'. -]{2,}$")
+
+
+def validar_campo(campo, valor, hoy):
+    """Valida y normaliza un dato del pedido.
+
+    Devuelve (valor_normalizado, None) si es correcto, o (None, mensaje_de_error)
+    con un texto que se le puede mostrar tal cual al cliente o al operador.
+    """
+    valor = (valor or "").strip()
+    if not valor:
+        return None, f"Falta {NOMBRES_LARGOS[campo]}."
+    if campo == "cedula":
+        cedula = normalizar_cedula(valor)
+        if cedula:
+            return cedula, None
+        return None, f"La cédula '{valor}' no es válida. Escríbala así: {EJEMPLOS['cedula']}."
+    if campo in ("nombres", "apellidos"):
+        if SOLO_LETRAS.match(valor):
+            return capitalizar_nombre(valor), None
+        return None, f"{NOMBRES_LARGOS[campo].capitalize()} '{valor}' no es válido: use solo letras."
+    if campo == "direccion":
+        if len(valor) >= 5:
+            return valor, None
+        return None, ("La dirección es muy corta; indique calle, casa o edificio y zona "
+                      f"(ej: {EJEMPLOS['direccion']}).")
+    if campo == "fecha":
+        fecha = normalizar_fecha(valor, hoy)
+        if not fecha:
+            return None, f"No entendimos la fecha '{valor}'. Escríbala así: {EJEMPLOS['fecha']}."
+        if fecha < hoy.isoformat():
+            dia = date.fromisoformat(fecha).strftime("%d/%m/%Y")
+            return None, f"La fecha {dia} ya pasó; indique hoy o una fecha futura."
+        return fecha, None
+    if campo == "hora":
+        hora, _ = normalizar_hora(valor, solo_numero=True)
+        if hora:
+            return hora, None
+        return None, f"No entendimos la hora '{valor}'. Escríbala así: {EJEMPLOS['hora']}."
+    raise ValueError(f"Campo desconocido: {campo}")
+
+
+NOMBRES_LARGOS = {
+    "cedula": "su cédula",
+    "nombres": "su nombre",
+    "apellidos": "su apellido",
+    "direccion": "la dirección de entrega",
+    "fecha": "la fecha de entrega",
+    "hora": "la hora de entrega",
+    "platos": "los platos que desea",
+}

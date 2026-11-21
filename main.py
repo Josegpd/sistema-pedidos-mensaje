@@ -1,4 +1,4 @@
-from parser_mensajes import Catalogo, analizar_mensaje, calcular_faltantes, leer_mensaje_pegado, resumen_para_operador
+from parser_mensajes import Catalogo, analizar_mensaje, calcular_faltantes, confirmar_pedido, leer_mensaje_pegado
 from models.pedido import Pedido
 from models.plato import Plato
 from models.mensaje_chat import Mensaje
@@ -8,7 +8,7 @@ from services.clientes_service import ClientesService
 from services.directorio_clientes import (
     GestorClientes, mostrar_directorio_clientes, pedir_y_consultar_historial
 )
-from services.persistencia import guardar_todo
+from services.persistencia import cargar_todo, guardar_todo
 from services.reporte import generar_reporte_del_dia
 from utils.consola import limpiar_pantalla, pausar
 from utils.validaciones import (
@@ -37,9 +37,40 @@ def mostrar_catalogo(catalogo: Catalogo):
     for plato in catalogo.platos.values():
         print(f"[{plato['id']}] {plato['nombre']} - ${plato['precio']:.2f}")
 
+def leer_id_pedido(prompt: str) -> str:
+    """Acepta el ID con o sin '#': '12345' y '#12345' son el mismo pedido."""
+    id_ped = leer_texto_no_vacio(prompt).strip()
+    return id_ped if id_ped.startswith("#") else "#" + id_ped
+
+def crear_y_encolar(datos_pedido: dict, gestor: GestorPedidos, clientes_srv: ClientesService) -> Pedido:
+    """Convierte un pedido ya confirmado (dict del parser) en objetos y lo pone en la cola."""
+    c_info = datos_pedido["cliente"]
+    cliente_obj = clientes_srv.registrar_o_actualizar(
+        c_info["cedula"], c_info["nombres"], c_info.get("apellidos") or "", c_info["direccion"]
+    )
+    # La promoción se calcula con el historial ANTES de sumar este pedido
+    promo = clientes_srv.obtener_promocion(cliente_obj)
+
+    msg_obj = Mensaje(id_msg=str(len(gestor.historial) + 1), texto=datos_pedido.get("texto_original") or "",
+                      fecha_recepcion=datos_pedido.get("fecha_recepcion") or "")
+    nuevo_pedido = Pedido(
+        hora=datos_pedido["hora"],
+        fecha=datos_pedido["fecha"],
+        total=datos_pedido["total_estimado"],
+        cliente=cliente_obj,
+        mensaje=msg_obj,
+        estado="Pendiente"
+    )
+    for p in datos_pedido["platos"]:
+        nuevo_pedido.agregar_detalle(Plato(p["id_plato"], p["nombre"], p["precio"]), p["cantidad"])
+
+    pos = gestor.registrar_pedido_completo(nuevo_pedido)
+    print(f"\nPedido registrado con éxito! ID: {nuevo_pedido.get_id()} (Turno en cola: {pos + 1})")
+    print(f"Promoción sugerida para el cliente: {promo}")
+    return nuevo_pedido
+
 def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_srv: ClientesService):
     print("\n--- NUEVO MENSAJE DE CHAT ---")
-    print("Pegue el mensaje del cliente y finalice escribiendo 'FIN' en una línea sola:")
     texto = leer_mensaje_pegado()
     if not texto:
         print("⚠️ No se ingresó ningún texto.")
@@ -71,68 +102,31 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
                 c_info["apellidos"] = cliente_existente.get_last_names()
             if not c_info.get("direccion"):
                 c_info["direccion"] = cliente_existente.get_address()
-            # Recalcular faltantes 
+            # Recalcular faltantes
             calcular_faltantes(datos_pedido)
-        else:
-            # Cliente nuevo
-            if c_info.get("nombres") and c_info.get("direccion"):
-                clientes_srv.registrar_o_actualizar(
-                    cedula, c_info["nombres"], c_info.get("apellidos", ""), c_info["direccion"]
-                )
 
-    # 4. Manejo de 'Lo de siempre' 
+    # 4. Manejo de 'Lo de siempre'
     if datos_pedido.get("lo_de_siempre"):
-        if cedula and cliente_existente:
-            detalles_previos = clientes_srv.resolver_lo_de_siempre(cliente_existente)
-            if detalles_previos:
-                print("Resolviendo 'Lo de siempre' con el historial del cliente...")
-                datos_pedido["platos"] = [
-                    {"id_plato": d.get_plato().get_id(), "nombre": d.get_plato().get_name(),
-                     "cantidad": d.get_cantidad(), "precio": d.get_precio_unitario(), "variacion": None}
-                    for d in detalles_previos
-                ]
-                calcular_faltantes(datos_pedido)
-            else:
-                print("El cliente pidió 'Lo de siempre' pero no registra pedidos previos.")
+        detalles_previos = clientes_srv.resolver_lo_de_siempre(cliente_existente) if cliente_existente else None
+        if detalles_previos:
+            print("Resolviendo 'Lo de siempre' con el historial del cliente...")
+            datos_pedido["platos"] += [
+                {"id_plato": d.get_plato().get_id(), "nombre": d.get_plato().get_name(),
+                 "cantidad": d.get_cantidad(), "precio": d.get_precio_unitario(), "variacion": "",
+                 "texto": "lo de siempre"}
+                for d in detalles_previos
+            ]
         else:
-            print("No se puede resolver 'Lo de siempre' sin cédula registrada.")
+            print("El cliente pidió 'Lo de siempre' pero no hay pedidos previos registrados: hay que preguntarle los platos.")
+        datos_pedido["lo_de_siempre"] = False
+        calcular_faltantes(datos_pedido)
 
-    # Resumen para operador del sistema
-    print("\n" + resumen_para_operador(datos_pedido))
-
-    if not datos_pedido.get("completo"):
-        print("\nEl pedido tiene campos faltantes o no reconocidos.")
-        print(f"Campos faltantes: {datos_pedido.get('faltantes')}")
-        if confirmar_accion("¿Desea enviar este pedido a la bandeja de incompletos?"):
-            gestor.registrar_incompleto(datos_pedido)
-            print("Guardado en pedidos incompletos.")
-        return
-
-    # Instanciar modelos y encolar
-    cliente_obj = clientes_srv.registrar_o_actualizar(
-        c_info["cedula"], c_info["nombres"], c_info.get("apellidos", ""), c_info["direccion"]
-    )
-    msg_obj = Mensaje(id_msg=str(len(gestor.historial) + 1), texto=texto, fecha_recepcion=datos_pedido.get("fecha_recepcion") or "")
-
-    nuevo_pedido = Pedido(
-        hora=datos_pedido["hora"],
-        fecha=datos_pedido["fecha"],
-        total=datos_pedido["total_estimado"],
-        cliente=cliente_obj,
-        mensaje=msg_obj,
-        estado="Pendiente"
-    )
-
-    for p in datos_pedido["platos"]:
-        plato_obj = Plato(p["id_plato"], p["nombre"], p["precio"])
-        nuevo_pedido.agregar_detalle(plato_obj, p["cantidad"])
-
-    pos = gestor.registrar_pedido_completo(nuevo_pedido)
-    print(f"\nPedido registrado con éxito! ID: {nuevo_pedido.get_id()} (Turno en cola: {pos + 1})")
-
-    # 7. Sugerencia de Promoción de Sonia
-    promo = clientes_srv.obtener_promocion(cliente_obj)
-    print(f"Promoción sugerida para el cliente: {promo}")
+    # 5. Completar lo que falte, mostrar el resumen y dejar corregir antes de aceptar
+    if confirmar_pedido(datos_pedido, catalogo):
+        crear_y_encolar(datos_pedido, gestor, clientes_srv)
+    elif not datos_pedido.get("completo") and confirmar_accion("¿Guardar el pedido en la bandeja de incompletos para terminarlo después?"):
+        gestor.registrar_incompleto(datos_pedido)
+        print("Guardado en pedidos incompletos.")
 
 def opcion_ver_cola(cola: ColaPedidos):
     print("\n--- COLA DE PEDIDOS PENDIENTES (Orden Cronológico) ---")
@@ -147,7 +141,7 @@ def opcion_ver_cola(cola: ColaPedidos):
 
 def opcion_cambiar_estado(gestor: GestorPedidos):
     print("\n--- CAMBIO DE ESTADO DE PEDIDO ---")
-    id_ped = leer_texto_no_vacio("Ingrese el ID del pedido (ej. #12345): ")
+    id_ped = leer_id_pedido("Ingrese el ID del pedido (ej. #12345): ")
     pedido = gestor.cola.get_by_id(id_ped)
 
     if not pedido:
@@ -169,7 +163,7 @@ def opcion_cambiar_estado(gestor: GestorPedidos):
 
 def opcion_registrar_pago(gestor: GestorPedidos):
     print("\n--- REGISTRO DE PAGOS ---")
-    id_ped = leer_texto_no_vacio("Ingrese el ID del pedido a abonar: ")
+    id_ped = leer_id_pedido("Ingrese el ID del pedido a abonar: ")
     pedido = gestor.buscar_en_historial(id_ped)
 
     if not pedido:
@@ -210,31 +204,12 @@ def opcion_pedidos_incompletos(gestor: GestorPedidos, catalogo: Catalogo, client
         return
 
     p_incompleto = incompletos[sel - 1]
-    print("\nCompletando datos faltantes:")
-    for campo in list(p_incompleto.get("faltantes", [])):
-        valor = leer_texto_no_vacio(f"Ingrese '{campo}' faltante: ")
-        if campo in ("cedula", "nombres", "apellidos", "direccion"):
-            p_incompleto["cliente"][campo] = valor
-        elif campo == "hora":
-            p_incompleto["hora"] = valor
-        elif campo == "fecha":
-            p_incompleto["fecha"] = valor
-
-    calcular_faltantes(p_incompleto)
-    if p_incompleto.get("completo"):
-        print("Todos los datos han sido completados.")
+    # Pregunta lo que falta (validando cada dato), muestra el resumen y deja corregir
+    if confirmar_pedido(p_incompleto, catalogo):
         incompletos.pop(sel - 1)
-        # Proceder a encolar
-        c_info = p_incompleto["cliente"]
-        cli = clientes_srv.registrar_o_actualizar(c_info["cedula"], c_info["nombres"], c_info.get("apellidos", ""), c_info["direccion"])
-        msg = Mensaje(id_msg=str(len(gestor.historial) + 1), texto=p_incompleto["texto_original"], fecha_recepcion="")
-        nuevo = Pedido(hora=p_incompleto["hora"], fecha=p_incompleto["fecha"], total=p_incompleto["total_estimado"], cliente=cli, mensaje=msg)
-        for pl in p_incompleto["platos"]:
-            nuevo.agregar_detalle(Plato(pl["id_plato"], pl["nombre"], pl["precio"]), pl["cantidad"])
-        gestor.registrar_pedido_completo(nuevo)
-        print(f"Pedido encolado exitosamente con ID: {nuevo.get_id()}")
+        crear_y_encolar(p_incompleto, gestor, clientes_srv)
     else:
-        print(f"Aún faltan campos: {p_incompleto.get('faltantes')}")
+        print("El pedido sigue en la bandeja de incompletos.")
 
 def opcion_consultar_cliente(clientes_srv: ClientesService):
     ced = leer_texto_no_vacio("Ingrese cédula del cliente: ")
@@ -269,9 +244,19 @@ def main():
         print(f"Error al cargar menú ({RUTA_MENU}): {e}")
         return
 
+    # Recuperar lo guardado en sesiones anteriores
+    datos = cargar_todo()
     cola = ColaPedidos()
     gestor = GestorPedidos(cola)
-    clientes_srv = ClientesService()
+    gestor.historial = datos["pedidos"]
+    for pedido in gestor.historial:
+        if pedido.get_estado() == "Pendiente":
+            cola.enqueue(pedido)
+    clientes_srv = ClientesService(datos["clientes"])
+    if gestor.historial or clientes_srv.clientes:
+        print(f"Datos cargados: {len(clientes_srv.clientes)} clientes, {len(gestor.historial)} pedidos "
+              f"({len(cola)} pendientes en cola).")
+        pausar()
 
     while True:
         limpiar_pantalla()
@@ -297,7 +282,8 @@ def main():
             datos_sistema = {"pedidos": gestor.historial}
             try:
                 generar_reporte_del_dia(datos_sistema)
-                print("Reporte generado exitosamente.")
+                guardar_todo({"clientes": clientes_srv.clientes, "pedidos": gestor.historial})
+                print("Reporte generado y datos guardados.")
             except Exception as err:
                 print(f"Error generando reporte: {err}")
         elif opcion == "0":

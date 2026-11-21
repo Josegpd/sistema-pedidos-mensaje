@@ -13,12 +13,14 @@ parser_mensajes/        Parser de mensajes (Juan)
   normalizar.py         minúsculas, acentos, plurales
   campos.py             cédula, nombres, fecha y hora
   platos.py             catálogo con alias y reconocimiento de platos/cantidades
-  parser.py             analizar_mensaje(), calcular_faltantes(), resumen_para_operador()
+  parser.py             analizar_mensaje(), calcular_faltantes(), mensajes_para_cliente(), resumen_para_operador()
+  completar.py          completar_pedido() y funciones para corregir un pedido incompleto
   entrada.py            lectura de mensajes pegados en varias líneas y del lote de prueba
 datos/menu.json         menú de ejemplo (con alias por plato)
 pruebas/mensajes_prueba.txt   lote de mensajes de prueba
 tests/test_parser.py    pruebas automáticas
 probar_parser.py        prueba del parser por terminal
+utils/estilo.py         colores, recuadros y símbolos para la terminal (para todo el equipo)
 ```
 
 ## Cómo probar
@@ -65,6 +67,7 @@ Lo que también entiende:
 - **Horas**: `13:30`, `1:30 pm`, `7pm`, `a las 8`, `1:30 de la tarde`.
 - **Cantidades**: `2 hamburguesas`, `2x papas`, `refresco x3`, `pizza 2`, `dos`, `una`, `media docena`.
 - **Varios platos por línea**: separados por coma, `;`, `+` o `y` antes de una cantidad.
+- **Platos fuera del menú**: van a `extras` y no impiden registrar el pedido.
 - **Variaciones**: lo que va entre paréntesis o tras `sin`, `extra`, `con extra`, `poco`…
 - **Errores de tipeo y alias**: `hamburgesa`, `piza peperoni`, `coca cola` → Refresco.
 - **"Lo de siempre"** (`lo mismo`, `lo de la otra vez`, `lo usual`…): se marca
@@ -84,13 +87,56 @@ pedido["hora"]           # "13:30"
 pedido["platos"]         # [{"id_plato", "nombre", "cantidad", "precio", "variacion", "texto"}]
 pedido["total_estimado"]
 pedido["lo_de_siempre"]  # True -> buscar en el historial del cliente (Sonia)
-pedido["ambiguos"]       # [{"texto", "cantidad", "variacion", "opciones": [{"id", "nombre"}]}]
-pedido["no_reconocidos"] # [{"texto", "cantidad", "variacion"}]
-pedido["faltantes"]      # ["direccion", "hora", ...]
-pedido["advertencias"]   # avisos para el operador
-pedido["completo"]       # True si no falta nada y no hay ambigüedades
+pedido["extras"]         # [{"texto", "cantidad", "variacion"}] lo que no está en el menú (no suma al total)
+pedido["ambiguos"]       # [{"texto", "cantidad", "variacion", "opciones": [{"id", "nombre", "precio"}]}]
+pedido["invalidos"]      # {"hora": "No entendimos la hora 'x'. Escríbala así: ..."}
+pedido["faltantes"]      # ["direccion", "hora", ...] (incluye los inválidos)
+pedido["advertencias"]   # avisos internos para el operador
+pedido["completo"]       # True si no falta nada y no hay platos ambiguos (los extras no impiden)
 pedido["fecha_recepcion"], pedido["texto_original"]   # para MensajeChat
 ```
+
+### Qué es obligatorio
+
+| Dato | Regla |
+|---|---|
+| Platos | **obligatorio**: al menos uno entendido (o "lo de siempre") y ningún ambiguo |
+| Cédula | **obligatoria** (identifica al cliente en el registro y en la detección de duplicados) |
+| Nombre | **obligatorio** |
+| Dirección | **obligatoria** |
+| Fecha y hora | si no vienen se asume el momento actual (o el de recepción del chat); si vienen mal escritas se preguntan |
+| Apellido | opcional; si viene mal escrito se descarta y queda el aviso para el cliente |
+
+### Pedidos incompletos: solo pasan datos correctos
+
+Un dato mal escrito (cédula `123`, hora `cuando puedan`, fecha que ya pasó, nombre con
+números…) **no se guarda**: queda en `None`, aparece en `faltantes` y su explicación en
+`invalidos`. Así, cuando `completo` es True, todos los datos están validados y normalizados.
+
+```python
+for frase in mensajes_para_cliente(pedido):   # lo que hay que decirle al cliente
+    print(frase)
+# Faltó en su pedido: la dirección de entrega y la hora de entrega.
+# No entendimos la fecha 'el finde'. Escríbala así: 15/11/2026, 'hoy' o 'mañana'.
+# ¿Cuál '2 pizzas' desea? Tenemos: Pizza margarita o Pizza pepperoni.
+# '1 sushi' no es parte de nuestro menú; lo anotamos como extra (sujeto a disponibilidad).
+
+completar_pedido(pedido, catalogo)   # pregunta al operador solo lo que falta, valida cada
+                                     # respuesta y deja elegir la opción de los ambiguos.
+                                     # 'cancelar' lo deja pendiente. Devuelve True si quedó completo.
+
+confirmar_pedido(pedido, catalogo)   # completa lo que falte y muestra el resumen final con
+                                     # [1] Confirmar  [2] Corregir un dato  [0] Cancelar.
+                                     # Devuelve True solo si el operador confirma.
+```
+
+Recomendado para el menú principal: `analizar_mensaje()` → rellenar datos del cliente
+registrado → `confirmar_pedido()` → si devuelve True, crear el `Pedido` y encolarlo.
+
+Funciones sueltas, por si el menú quiere preguntar a su manera:
+`completar_campo(pedido, campo, valor)` (devuelve el error o None),
+`resolver_ambiguo(pedido, indice, id_plato)` (`None` = pasarlo a extras),
+`agregar_platos(pedido, "2 hamburguesas", catalogo)` y `validar_campo(campo, valor, hoy)`.
 
 Notas para el equipo:
 

@@ -35,5 +35,12 @@ class DetallePedido:
         
         # Enlazamos de nuevo con el objeto Plato real usando el Menu cargado en memoria
         plato_obj = menu_obj.buscar_plato(id_plato)
-        
-        return cls(plato=plato_obj, cantidad=cantidad)
+        if plato_obj is None:
+            # El plato ya no está en el menú: se conserva el pedido con un plato provisional
+            from .plato import Plato
+            plato_obj = Plato(id_plato, f"Plato {id_plato} (fuera del menú)", precio_unit or 0)
+
+        detalle = cls(plato=plato_obj, cantidad=cantidad)
+        if precio_unit is not None:
+            detalle.__precio_unitario = precio_unit  # el precio que se cobró, no el actual
+        return detalle
