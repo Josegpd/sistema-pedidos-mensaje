@@ -94,26 +94,36 @@ def cargar_todo():
     }
 
 """
-    Toma los diccionarios/listas en memoria, los convierte a diccionarios 
-    mediante a_dict() y los guarda usando guardar_json().
+    Convierte los objetos en memoria a diccionarios mediante a_dict() y los
+    guarda con guardar_json().
+
+    Recibe un diccionario con estas claves (todas opcionales):
+        "clientes": dict {id: Cliente}
+        "pedidos":  lista de Pedido (cada pedido incluye sus pagos y detalles)
+        "pagos":    lista de Pago      (solo si se lleva una lista aparte)
+        "platos":   lista de Plato     (solo si se lleva una lista aparte)
+
+    Las claves que no vengan se omiten, así no se sobrescriben archivos que
+    el programa no manejó en esta sesión.
+
+    NOTA: el menú (datos/menu.json) NO se guarda aquí. Es un archivo de
+    configuración que el programa solo lee; Plato.a_dict() no incluye los
+    alias, así que guardarlo los borraría y el parser dejaría de reconocer
+    los platos.
 """
 def guardar_todo(sistema_datos):
-    # Convertir clientes de diccionario de objetos a lista de diccionarios
-    lista_clientes = [cliente.a_dict() for cliente in sistema_datos["clientes"].values()]
-    guardar_json(RUTAS["clientes"], lista_clientes)
+    if "clientes" in sistema_datos:
+        lista_clientes = [c.a_dict() for c in sistema_datos["clientes"].values()]
+        guardar_json(RUTAS["clientes"], lista_clientes)
 
-    # Convertir menu
-    menu = sistema_datos["menu"].a_dict()
-    guardar_json(RUTAS["menu"], menu)
+    if "pedidos" in sistema_datos:
+        lista_pedidos = [p.a_dict() for p in sistema_datos["pedidos"]]
+        guardar_json(RUTAS["pedidos"], lista_pedidos)
 
-    # Convertir pedidos
-    lista_pedidos = [pedido.a_dict() for pedido in sistema_datos["pedidos"]]
-    guardar_json(RUTAS["pedidos"], lista_pedidos)
+    if "pagos" in sistema_datos:
+        lista_pagos = [p.a_dict() for p in sistema_datos["pagos"]]
+        guardar_json(RUTAS["pagos"], lista_pagos)
 
-    # Convertir pagos
-    lista_pagos = [pago.a_dict() for pago in sistema_datos["pagos"]]
-    guardar_json(RUTAS["pagos"], lista_pagos)
-
-    # Convertir platos
-    lista_platos = [plato.a_dict() for plato in sistema_datos["platos"]]
-    guardar_json(RUTAS["platos"], lista_platos)
+    if "platos" in sistema_datos:
+        lista_platos = [p.a_dict() for p in sistema_datos["platos"]]
+        guardar_json(RUTAS["platos"], lista_platos)
