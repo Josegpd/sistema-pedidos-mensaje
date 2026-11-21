@@ -4,33 +4,66 @@ import os
 import sys
 import subprocess
 
-def generar_reporte_del_dia(sistema_datos):
+ESTADO_VENDIDO = "Entregado"
+
+
+def generar_reporte_del_dia(sistema_datos, fecha=None):
+    """Genera el reporte de ventas del día y devuelve su texto.
+
+    Cuenta como venta cada pedido ENTREGADO con fecha de hoy (o la fecha dada).
+    Incluye unidades y monto por plato, ordenados de más a menos vendido.
+    """
+    fecha_actual = fecha or date.today()
+    # Nombre del plato -> [unidades, monto]
     ventas = {}
-    # Obtener la lista de pedidos
     pedidos = sistema_datos["pedidos"]
-    ventas_totales = 0
+    unidades_totales = 0
+    monto_total = 0.0
+    entregados = 0
+    cancelados = 0
 
     for pedido in pedidos:
-        if pedido.get_estado() in ("Pagado", "pagado"):
-            # Tomar la lista de pedidos
-            detalles_pedido = pedido.get_detalles()
-            
-            for detalle in detalles_pedido:
-                cantidad = detalle.get_cantidad()
-                nombre_plato = detalle.get_plato().get_name()
-                
-                # Sumar al total general
-                ventas_totales += cantidad
+        if pedido.get_fecha() != fecha_actual.isoformat():
+            continue
+        if pedido.get_estado().startswith("Cancelado"):
+            cancelados += 1
+            continue
+        if pedido.get_estado() != ESTADO_VENDIDO:
+            continue
+        entregados += 1
 
-                if nombre_plato in ventas:
-                    # Contar una venta mas del plato
-                    ventas[nombre_plato] += + cantidad
-                else:
-                    # Primera venta del plato
-                    ventas[nombre_plato] = cantidad
+        for detalle in pedido.get_detalles():
+            cantidad = detalle.get_cantidad()
+            subtotal = detalle.calcular_subtotal()
+            nombre_plato = detalle.get_plato().get_name()
 
-    # Obtener la fecha del dia actual
-    fecha_actual = date.today()
+            unidades_totales += cantidad
+            monto_total += subtotal
+            fila = ventas.setdefault(nombre_plato, [0, 0.0])
+            fila[0] += cantidad
+            fila[1] += subtotal
+
+    # Rankear los platos en orden descendente por los más vendidos (y por monto si empatan)
+    ventas_ordenadas = sorted(ventas.items(), key=lambda item: (item[1][0], item[1][1]), reverse=True)
+
+    lineas = [
+        "=" * 60,
+        f"REPORTE DE VENTAS DEL {fecha_actual.strftime('%d/%m/%Y')}",
+        f"Pedidos entregados: {entregados}    Cancelados: {cancelados}",
+        "=" * 60,
+        f"{'#':<3} {'PLATO':<30} | {'UNIDADES':>8} | {'MONTO':>10}",
+        "-" * 60,
+    ]
+    for puesto, (plato, (unidades, monto)) in enumerate(ventas_ordenadas, 1):
+        lineas.append(f"{puesto:<3} {plato:<30} | {unidades:>8} | {monto:>10.2f}")
+    if not ventas_ordenadas:
+        lineas.append("(no hubo ventas entregadas hoy)")
+    lineas += [
+        "-" * 60,
+        f"{'':<3} {'TOTAL':<30} | {unidades_totales:>8} | {monto_total:>10.2f}",
+        "=" * 60,
+    ]
+    texto = "\n".join(lineas)
 
     # Definir la carpeta y asegurarse de que exista
     nombre_carpeta = "registros"
@@ -40,23 +73,13 @@ def generar_reporte_del_dia(sistema_datos):
     ruta_archivo = os.path.join(nombre_carpeta, nombre_archivo)
 
     with open(ruta_archivo, "w", encoding="utf-8") as file:
-        # Rankear los platos en orden descendente por los mas vendidos
-        ventas_ordenadas = sorted(ventas.items(), key=lambda item: item[1], reverse=True)
+        file.write(texto + "\n")
 
-        # Encabezado de la tabla
-        file.write("=" * 50 + "\n")
-        file.write(f"{'NOMBRE DEL PLATO':<35} | {'VENTAS'}\n")
-        file.write("-" * 50 + "\n")
-        
-        # Filas de platos vendidos
-        for plato, venta in ventas_ordenadas:
-            file.write(f"{plato:<35} | {venta}\n")
-            
-        # Pie de la tabla y totales
-        file.write("-" * 50 + "\n")
-        file.write(f"{'VENTAS TOTALES':<35} | {ventas_totales}\n")
-        file.write("=" * 50 + "\n")
+    print(texto)
+    print(f"\nGuardado en {ruta_archivo}")
 
+    if not sys.stdout.isatty():   # en pruebas o redirigido: no abrir ventanas
+        return texto
     try:
         if sys.platform == "win32":
             os.startfile(ruta_archivo)
@@ -66,3 +89,4 @@ def generar_reporte_del_dia(sistema_datos):
             subprocess.run(["xdg-open", ruta_archivo])
     except Exception as e:
         print(f"No se pudo abrir el archivo automáticamente: {e}")
+    return texto
