@@ -8,6 +8,7 @@ from services.clientes_service import ClientesService
 from services.directorio_clientes import (
     GestorClientes, mostrar_directorio_clientes, pedir_y_consultar_historial
 )
+from services.persistencia import guardar_todo
 from services.reporte import generar_reporte_del_dia
 from utils.consola import limpiar_pantalla, pausar
 from utils.validaciones import (
@@ -31,6 +32,11 @@ def mostrar_menu_principal():
     print(" 0) Salir")
     print("=" * 55)
 
+def mostrar_catalogo(catalogo: Catalogo):
+    print("\n--- CATÁLOGO DE PLATOS ---")
+    for plato in catalogo.platos.values():
+        print(f"[{plato['id']}] {plato['nombre']} - ${plato['precio']:.2f}")
+
 def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_srv: ClientesService):
     print("\n--- NUEVO MENSAJE DE CHAT ---")
     print("Pegue el mensaje del cliente y finalice escribiendo 'FIN' en una línea sola:")
@@ -53,6 +59,7 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
     # Validar / Autocompletar datos del cliente con Sonia
     c_info = datos_pedido["cliente"]
     cedula = c_info.get("cedula")
+    cliente_existente = None
 
     if cedula:
         cliente_existente = clientes_srv.buscar_por_cedula(cedula)
@@ -80,7 +87,7 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
             if detalles_previos:
                 print("Resolviendo 'Lo de siempre' con el historial del cliente...")
                 datos_pedido["platos"] = [
-                    {"id_plato": d.get_plato().get_name(), "nombre": d.get_plato().get_name(),
+                    {"id_plato": d.get_plato().get_id(), "nombre": d.get_plato().get_name(),
                      "cantidad": d.get_cantidad(), "precio": d.get_precio_unitario(), "variacion": None}
                     for d in detalles_previos
                 ]
@@ -105,7 +112,7 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
     cliente_obj = clientes_srv.registrar_o_actualizar(
         c_info["cedula"], c_info["nombres"], c_info.get("apellidos", ""), c_info["direccion"]
     )
-    msg_obj = Mensaje(id_msg=str(len(gestor.historial_general) + 1), texto=texto, fecha_recepcion=datos_pedido.get("fecha_recepcion") or "")
+    msg_obj = Mensaje(id_msg=str(len(gestor.historial) + 1), texto=texto, fecha_recepcion=datos_pedido.get("fecha_recepcion") or "")
 
     nuevo_pedido = Pedido(
         hora=datos_pedido["hora"],
@@ -117,7 +124,7 @@ def opcion_procesar_mensaje(catalogo: Catalogo, gestor: GestorPedidos, clientes_
     )
 
     for p in datos_pedido["platos"]:
-        plato_obj = Plato(nombre=p["nombre"], precio=p["precio"])
+        plato_obj = Plato(p["id_plato"], p["nombre"], p["precio"])
         nuevo_pedido.agregar_detalle(plato_obj, p["cantidad"])
 
     pos = gestor.registrar_pedido_completo(nuevo_pedido)
@@ -141,7 +148,7 @@ def opcion_ver_cola(cola: ColaPedidos):
 def opcion_cambiar_estado(gestor: GestorPedidos):
     print("\n--- CAMBIO DE ESTADO DE PEDIDO ---")
     id_ped = leer_texto_no_vacio("Ingrese el ID del pedido (ej. #12345): ")
-    pedido = gestor.cola.buscar_por_id(id_ped)
+    pedido = gestor.cola.get_by_id(id_ped)
 
     if not pedido:
         print(f"El pedido {id_ped} no se encuentra en la cola de pendientes.")
@@ -181,7 +188,7 @@ def opcion_registrar_pago(gestor: GestorPedidos):
     referencia = leer_texto_no_vacio("Referencia / Comprobante: ")
     monto = leer_float_positivo(f"Monto a pagar (máx ${saldo:.2f}): ")
 
-    ok, nuevo_saldo, msg = gestor.registrar_pago(pedido, metodo, referencia, monto)
+    ok, nuevo_saldo, msg = gestor.registro_de_pagos(pedido, metodo, referencia, monto)
     if ok:
         print(f"{msg} Saldo restante actual: ${nuevo_saldo:.2f}")
     else:
@@ -196,7 +203,7 @@ def opcion_pedidos_incompletos(gestor: GestorPedidos, catalogo: Catalogo, client
     print(f"\n--- BANDEJA DE PEDIDOS INCOMPLETOS ({len(incompletos)}) ---")
     for idx, inc in enumerate(incompletos):
         faltan = ", ".join(inc.get("faltantes", []))
-        print(f"[{idx + 1}] Texto: {inc.get('texto_original')[:40]}... | Faltan: {faltan}")
+        print(f"[{idx + 1}] Texto: {(inc.get('texto_original') or '')[:40]}... | Faltan: {faltan}")
 
     sel = leer_entero("Seleccione el número de pedido a completar (0 para volver): ", 0, len(incompletos))
     if sel == 0:
@@ -220,10 +227,10 @@ def opcion_pedidos_incompletos(gestor: GestorPedidos, catalogo: Catalogo, client
         # Proceder a encolar
         c_info = p_incompleto["cliente"]
         cli = clientes_srv.registrar_o_actualizar(c_info["cedula"], c_info["nombres"], c_info.get("apellidos", ""), c_info["direccion"])
-        msg = Mensaje(id_msg=str(len(gestor.historial_general) + 1), texto=p_incompleto["texto_original"], fecha_recepcion="")
+        msg = Mensaje(id_msg=str(len(gestor.historial) + 1), texto=p_incompleto["texto_original"], fecha_recepcion="")
         nuevo = Pedido(hora=p_incompleto["hora"], fecha=p_incompleto["fecha"], total=p_incompleto["total_estimado"], cliente=cli, mensaje=msg)
         for pl in p_incompleto["platos"]:
-            nuevo.agregar_detalle(Plato(pl["nombre"], pl["precio"]), pl["cantidad"])
+            nuevo.agregar_detalle(Plato(pl["id_plato"], pl["nombre"], pl["precio"]), pl["cantidad"])
         gestor.registrar_pedido_completo(nuevo)
         print(f"Pedido encolado exitosamente con ID: {nuevo.get_id()}")
     else:
@@ -284,10 +291,10 @@ def main():
         elif opcion == "6":
             opcion_clientes(clientes_srv)
         elif opcion == "7":
-            catalogo.mostrar_menu() if hasattr(catalogo, "mostrar_menu") else print(catalogo)
+            mostrar_catalogo(catalogo)
         elif opcion == "8":
             print("\nGenerando reporte del día...")
-            datos_sistema = {"pedidos": gestor.historial_general}
+            datos_sistema = {"pedidos": gestor.historial}
             try:
                 generar_reporte_del_dia(datos_sistema)
                 print("Reporte generado exitosamente.")
@@ -296,6 +303,7 @@ def main():
         elif opcion == "0":
             if confirmar_accion("¿Seguro que desea salir del sistema?"):
                 print("\nCerrando sistema. ¡Buen turno!")
+                guardar_todo(catalogo)
                 break
             continue  # no se canceló nada que leer: se vuelve directo al menú
 
@@ -308,5 +316,3 @@ if __name__ == "__main__":
         main()
     except (KeyboardInterrupt, EOFError):
         print("\n\nOperación interrumpida. Saliendo...")
-
-    
