@@ -14,18 +14,24 @@ class GestorPedidos:
     # Deteccion de duplicados
     def es_duplicado(self, datos_parser: dict) -> tuple[bool, str]:
         cedula_nueva = datos_parser.get("cliente", {}).get("cedula")
+        fecha_nueva = datos_parser.get("fecha")
         hora_nueva = datos_parser.get("hora")
-        texto_nuevo = datos_parser.get("texto_original", "").strip()
+        texto_nuevo = (datos_parser.get("texto_original") or "").strip()
 
         for pedido in self.historial:
+            # Un pedido cancelado no cuenta: el cliente puede volver a pedir lo mismo
+            if (pedido.get_estado() or "").startswith("Cancelado"):
+                continue
+
             # Coincidencia por texto idéntico
-            if pedido.get_mensaje() and pedido.get_mensaje().get_text().strip() == texto_nuevo:
+            if texto_nuevo and pedido.get_mensaje() and pedido.get_mensaje().get_text().strip() == texto_nuevo:
                 return True, f"Existe un pedido con el mismo texto exacto (ID: {pedido.get_id()})."
 
-            # Coincidencia por cliente y hora
-            if pedido.get_cliente() and pedido.get_cliente().get_id() == cedula_nueva:
-                if pedido.get_hora() == hora_nueva:
-                    return True, f"El cliente {cedula_nueva} ya tiene un pedido para las {hora_nueva} (ID: {pedido.get_id()})."
+            # Coincidencia por cliente, fecha y hora
+            if cedula_nueva and pedido.get_cliente() and pedido.get_cliente().get_id() == cedula_nueva:
+                if pedido.get_fecha() == fecha_nueva and pedido.get_hora() == hora_nueva:
+                    return True, (f"El cliente {cedula_nueva} ya tiene un pedido para el {fecha_nueva} "
+                                  f"a las {hora_nueva} (ID: {pedido.get_id()}).")
 
         return False, ""
 
@@ -68,6 +74,10 @@ class GestorPedidos:
     def registro_de_pagos(self, pedido:Pedido, metodo_pago:str, referencia:str, monto:float) -> tuple[bool, float, str]:
 
         saldo_pendiente = pedido.calcular_saldo_restante()
+
+        # A un pedido cancelado no se le registran pagos
+        if (pedido.get_estado() or "").startswith("Cancelado"):
+            return False, saldo_pendiente, "El pedido está cancelado; no se le pueden registrar pagos"
 
         # Si no hay saldo pendiente
         if saldo_pendiente <= 0:

@@ -169,11 +169,20 @@ def confirmar_pedido(pedido, catalogo, leer=input, mostrar=print, hoy=None):
     def preguntar(texto):
         return leer(texto).strip().lstrip("﻿")
 
+    aviso = None
     while True:
-        if not pedido["completo"] and not completar_pedido(pedido, catalogo, leer, mostrar, hoy):
-            return False
+        # Pantalla limpia en cada vuelta: solo el pedido como está ahora (en la terminal real)
+        if mostrar is print:
+            e.limpiar_pantalla()
         mostrar("")
         mostrar(resumen_para_operador(pedido))
+        if aviso:
+            mostrar("  " + aviso)
+            aviso = None
+        if not pedido["completo"]:
+            if not completar_pedido(pedido, catalogo, leer, mostrar, hoy):
+                return False
+            continue  # se vuelve a mostrar el resumen, ya completo
         mostrar(e.opcion(1, e.verde("Confirmar pedido")))
         mostrar(e.opcion(2, "Corregir un dato"))
         mostrar(e.opcion(0, e.rojo("Cancelar pedido")))
@@ -187,7 +196,7 @@ def confirmar_pedido(pedido, catalogo, leer=input, mostrar=print, hoy=None):
         if eleccion == "2":
             _corregir(pedido, catalogo, preguntar, mostrar, hoy)
         else:
-            mostrar("  " + e.error("Opción no válida: escriba 1, 2 o 0."))
+            aviso = e.error("Opción no válida: escriba 1, 2 o 0.")
 
 
 def _corregir(pedido, catalogo, preguntar, mostrar, hoy):

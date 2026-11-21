@@ -37,8 +37,7 @@ def procesar_mensaje(catalogo, como_json):
         print("  " + e.aviso("No se pegó ningún mensaje."))
         return
     pedido = analizar_mensaje(texto, catalogo)
-    if not pedido["completo"]:
-        mostrar(pedido)                     # lo que se entendió del mensaje y lo que falta
+    # confirmar_pedido muestra lo que se entendió, pregunta lo que falta y deja corregir
     if confirmar_pedido(pedido, catalogo) and como_json:
         mostrar(pedido, como_json=True)     # lo que recibiría el resto del programa
 

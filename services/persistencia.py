@@ -16,6 +16,8 @@ RUTAS = {
     "pedidos": os.path.join(CARPETA_DATOS, "pedidos.json"),
     "pagos": os.path.join(CARPETA_DATOS, "pagos.json"),
     "platos": os.path.join(CARPETA_DATOS, "platos.json"),
+    # Pedidos a medias de la bandeja (se guardan como los dicts del parser)
+    "incompletos": os.path.join(CARPETA_DATOS, "incompletos.json"),
 }
 
 def cargar_json(ruta, por_defecto):
@@ -94,6 +96,7 @@ def cargar_todo():
         "pedidos": pedidos,
         "pagos": pagos,
         "platos": platos,
+        "incompletos": cargar_json(RUTAS["incompletos"], []),
     }
 
 """
@@ -130,3 +133,6 @@ def guardar_todo(sistema_datos):
     if "platos" in sistema_datos:
         lista_platos = [p.a_dict() for p in sistema_datos["platos"]]
         guardar_json(RUTAS["platos"], lista_platos)
+
+    if "incompletos" in sistema_datos:
+        guardar_json(RUTAS["incompletos"], sistema_datos["incompletos"])
