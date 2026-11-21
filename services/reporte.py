@@ -21,6 +21,7 @@ def generar_reporte_del_dia(sistema_datos, fecha=None):
     monto_total = 0.0
     entregados = 0
     cancelados = 0
+    por_cobrar = 0.0   # saldo que quedó sin pagar en los pedidos entregados
 
     for pedido in pedidos:
         if pedido.get_fecha() != fecha_actual.isoformat():
@@ -31,6 +32,7 @@ def generar_reporte_del_dia(sistema_datos, fecha=None):
         if pedido.get_estado() != ESTADO_VENDIDO:
             continue
         entregados += 1
+        por_cobrar += max(0.0, pedido.calcular_saldo_restante())
 
         for detalle in pedido.get_detalles():
             cantidad = detalle.get_cantidad()
@@ -61,6 +63,8 @@ def generar_reporte_del_dia(sistema_datos, fecha=None):
     lineas += [
         "-" * 60,
         f"{'':<3} {'TOTAL':<30} | {unidades_totales:>8} | {monto_total:>10.2f}",
+        f"{'':<3} {'Cobrado':<30} | {'':>8} | {monto_total - por_cobrar:>10.2f}",
+        f"{'':<3} {'Por cobrar':<30} | {'':>8} | {por_cobrar:>10.2f}",
         "=" * 60,
     ]
     texto = "\n".join(lineas)

@@ -1,13 +1,19 @@
 from .detalle_pedido import DetallePedido
 from .mensaje_chat import Mensaje
 from .pago import Pago
-from random import randint
-
 class Pedido:
-    
+    # Contador para dar IDs consecutivos (#1, #2, ...). Al cargar pedidos guardados
+    # se ajusta para seguir después del mayor ID existente.
+    _ultimo_id = 0
+
     # Constructor
-    def __init__(self, hora: str, fecha: str, total: float, cliente, mensaje, estado: str = "Pendiente", registrar_en_cliente: bool = True):
-        self.__id = randint(1, 1000000) # id unico para ese pedido
+    def __init__(self, hora: str, fecha: str, total: float, cliente, mensaje, estado: str = "Pendiente",
+                 registrar_en_cliente: bool = True, direccion: str = None):
+        Pedido._ultimo_id += 1
+        self.__id = Pedido._ultimo_id # id único para ese pedido
+        # Dirección de entrega de ESTE pedido (si el cliente se muda, los pedidos viejos no cambian)
+        self.__address = direccion or (cliente.get_address() if cliente else None)
+        self.__extras = []
         self.__hour = hora
         self.__date = fecha
         self.__total = total
@@ -28,6 +34,9 @@ class Pedido:
 
     def get_fecha(self):
         return self.__date
+
+    def get_direccion(self):
+        return self.__address
 
     def get_estado(self):
         return self.__status
@@ -50,9 +59,16 @@ class Pedido:
     def get_mensaje(self):
         return self.__message
 
-    def agregar_detalle(self, plato, cantidad: int):
-        detalle = DetallePedido(plato, cantidad)
+    def agregar_detalle(self, plato, cantidad: int, variacion: str = ""):
+        detalle = DetallePedido(plato, cantidad, variacion)
         self.__details.append(detalle)
+
+    # Lo que el cliente pidió y no está en el menú ("1 sushi"): la cocina decide si se puede
+    def get_extras(self):
+        return self.__extras
+
+    def agregar_extra(self, texto: str):
+        self.__extras.append(texto)
     
     def quitar_ultimo_detalle(self):
         if len(self.__details) == 0:
@@ -102,7 +118,9 @@ class Pedido:
             "mensaje": self.__message.a_dict() if self.__message else None,
             "detalles": [detalle.a_dict() for detalle in self.__details],
             "pagos": [pago.a_dict() for pago in self.__pay_data],
-            "estado": self.__status
+            "estado": self.__status,
+            "direccion": self.__address,
+            "extras": list(self.__extras)
         }
 
     @classmethod
@@ -114,6 +132,7 @@ class Pedido:
         msg_dict = d.get("mensaje")
         mensaje = Mensaje.desde_dict(msg_dict) if msg_dict else None
         
+        contador_antes = Pedido._ultimo_id  # cargar no debe gastar números de ID
         pedido = cls(
             hora = d.get("hora"),
             fecha = d.get("fecha"),
@@ -121,11 +140,16 @@ class Pedido:
             cliente = cliente,
             mensaje = mensaje,
             estado = d.get("estado", "Pendiente"),
-            registrar_en_cliente = False
+            registrar_en_cliente = False,
+            direccion = d.get("direccion")
         )
+        pedido.__extras = list(d.get("extras", []))
 
-        # Asignar el ID exacto que tenia guardado
+        # Asignar el ID exacto que tenía guardado y seguir contando desde el mayor
         pedido.__id = d.get("id")
+        Pedido._ultimo_id = contador_antes
+        if isinstance(pedido.__id, int):
+            Pedido._ultimo_id = max(Pedido._ultimo_id, pedido.__id)
         
         # Reconstruir detalles con el menu
         for det_dict in d.get("detalles", []):

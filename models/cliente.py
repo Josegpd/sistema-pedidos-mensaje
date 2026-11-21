@@ -23,6 +23,15 @@ class Cliente:
     def get_order_history(self):
         return self.__order_history
 
+    # Actualiza los datos que vengan con valor (los vacíos se ignoran)
+    def actualizar_datos(self, nombres: str = None, apellidos: str = None, direccion: str = None):
+        if nombres:
+            self.__names = nombres
+        if apellidos:
+            self.__last_names = apellidos
+        if direccion:
+            self.__address = direccion
+
     # Insertar una orden
     def push_new_order(self, order):
         self.__order_history.append(order)
