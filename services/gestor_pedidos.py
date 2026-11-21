@@ -5,7 +5,6 @@ from models.pago import Pago
 from .cola_pedidos import ColaPedidos
 from parser_mensajes import calcular_faltantes
 
-
 class GestorPedidos:
     def __init__(self, cola:ColaPedidos):
         self.cola = cola
@@ -45,7 +44,7 @@ class GestorPedidos:
         return pos
 
     # Marcar pedido como entregado
-    def marcar_como_entregado(self, id_pedido:int) -> bool:
+    def marcar_como_entregado(self, id_pedido:str) -> bool:
         pedido = self.cola.dequeue_by_id(id_pedido)
 
         # Si el pedido existe, se marca como 'entregado'
@@ -56,7 +55,7 @@ class GestorPedidos:
         return False
 
     # Marcar pedido como cancelado
-    def marcar_como_cancelado(self, id_pedido:int, motivo:str) -> bool:
+    def marcar_como_cancelado(self, id_pedido:str, motivo:str) -> bool:
         pedido = self.cola.dequeue_by_id(id_pedido)
 
         # Si el pedido existe, se marca como 'Cancelado''
