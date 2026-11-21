@@ -303,7 +303,7 @@ def main():
         elif opcion == "0":
             if confirmar_accion("¿Seguro que desea salir del sistema?"):
                 print("\nCerrando sistema. ¡Buen turno!")
-                guardar_todo(catalogo)
+                guardar_todo({"clientes": clientes_srv.clientes, "pedidos": gestor.historial})
                 break
             continue  # no se canceló nada que leer: se vuelve directo al menú
 
