@@ -96,8 +96,9 @@ class GestorPedidos:
 
     # Búsqueda de pedido por ID en el historial
     def buscar_en_historial(self, id_pedido: str) -> Pedido | None:
+        objetivo = id_pedido.strip()
         for p in self.historial:
-            if p.get_id == id_pedido:
+            if str(p.get_id()).strip() == objetivo:
                 return p
 
         # Retorna None si el pedido no existe
