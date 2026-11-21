@@ -11,7 +11,8 @@ def generar_reporte_del_dia(sistema_datos):
     ventas_totales = 0
 
     for pedido in pedidos:
-        if pedido.get_estado() in ("Pagado", "pagado"):
+        estado = (pedido.get_estado() or "").strip().lower()
+        if estado in ("pagado", "entregado"):
             # Tomar la lista de pedidos
             detalles_pedido = pedido.get_detalles()
             
@@ -21,10 +22,10 @@ def generar_reporte_del_dia(sistema_datos):
                 
                 # Sumar al total general
                 ventas_totales += cantidad
-
+                
                 if nombre_plato in ventas:
                     # Contar una venta mas del plato
-                    ventas[nombre_plato] += + cantidad
+                    ventas[nombre_plato] += cantidad
                 else:
                     # Primera venta del plato
                     ventas[nombre_plato] = cantidad
